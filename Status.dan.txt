@@ -1,0 +1,74 @@
+
+May 7
+=====
+
+  Included a better HTML page for the control, with better styling and javascript inside
+  Improved the compress.py script
+  The HTML page is polling now the ESP32 server, and fetch a random value (fake milliVolt)
+
+ To Do:
+   Improve the CSS of the HTML  (The header of the control-box)
+   Study carefully all the method of the main.c (some are GET some are POST)
+   Include the ADC reading code
+   Push the value red to the web page (instead of the current random value)
+   Add an indicator on the Web Page to show if the ESP32 appears up or down (like a red/green led on the screen)
+
+
+
+ Next:
+   Another milestrong will be to send chunk of values, instead of only one ADC values (10? 100? more?)
+   Have a graph on the web page to see the values over time
+   Consider Web Socket later?
+   
+May 6
+=====
+
+Wrote a Python script to take an HTML document and translate it into a C-string that can be added into main.c
+and served as web page by the server.
+
+Display Analog read on page
+   create a timer on the web page that send HTTP query and fetch values values 
+
+May 2
+=====
+
+ Modified the simpleHTTPServer to blink the green led, using a seperated Thread
+ Added the registration to serve an index.html file (http://10.0.0.250/index.html)
+ Used the HTML string of the '\WiFiServer\webserver_with_led' to serve an HTML
+
+ To Do:
+   To serve an HTML document, the HTML as to be concerted to be a C string. Find an tool that does that
+   Add buttons and control on the index.html page
+   ESP32 to start to react to commands from the index.html 
+
+
+May 1
+=====
+
+Tested a simple thread that blinks led (esp32-idf\Blink\blink project)
+
+Tested (and worked) the http_server from the example.
+Copied project here (Working):  
+   C:\data\Electronic\workspace\esp32-idf\WiFiServer\simpleHTTPServer
+   
+  NOTE: The ssid and password need to be modified in the common 
+         \examples\common_components\protocol_examples_common\include
+
+
+To Do:
+   * Continue to study the example
+   * Add more GET methods that the server can reply to
+   * Add an internal thread, like flashing a LED
+   * Should try to extract the common code int the protocol_examples_common and merge   into main.c
+
+   
+
+April 25
+=========
+
+ Started the idf on the DanServerPC. Been able to build and flash few examples,
+ like the Blink, the Wifi SoftAP and Wifi Station.
+
+To Do:
+ Need to try ADC project
+ Then try an ADC with DMA (continus conversion may be a candiate?)

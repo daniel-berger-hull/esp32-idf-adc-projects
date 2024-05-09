@@ -18,7 +18,7 @@
         }
 
         .wrapper {
-            width: 90%;
+            width: 40%;
             margin: auto;
         }
 
@@ -37,17 +37,18 @@
         }
 
         .medium-box {
-            width: 300px;
+            width: 250px;
         }
 
         .line-of-items {
             display: flex;
-            margin-left: 10px;
+            margin: auto;
             margin-bottom: 5px;
+            text-align: center;
         }
 
         .line-of-items .col {
-            width: 32%;
+            width: 50px;
         }
 
         .in-the-middle {
@@ -59,17 +60,16 @@
 <body>
 
     <div class="wrapper">
-        <h1>Pool monitor 2</h1>
+        <h1>ESP32 ADC Reading</h1>
 
         <div class="control-box medium-box">
             <div class="control-box-header">Whole House</div>
             <div class="line-of-items">
-                <div  class="col">Current Value</div>    
+                <div  class="col">Current</div>    
                 <div id="current-Value-label"  class="col">20</div>    
                 <div  class="col">mV</div>    
             </div>
             
-            <div class="line-of-items"><div><button id="manual-button">Manual</button></div></div>
             <div class="line-of-items"><div>Automatic Update</div></div>
             
             <div class="line-of-items">
@@ -86,23 +86,28 @@
         const url='http://10.0.0.250/update';
         
         var activeUpdate = false;
-    
-        const manualUptButtonClickHandler  = () => {
-            console.log("Manual of Test Button!");
-            
-            const valueLabel = document.getElementById("current-Value-label");
-            valueLabel.innerHTML = Math.floor(Math.random() * 10);
-        };
 
+        const toggleUpdateButtons = (running) => {
+
+            document.getElementById("start-update-button").disabled = running;
+            document.getElementById("stop-update-button").disabled = !running;
+           
+        };
+    
         const startUpdateButtonClickHandler  = () => {
             console.log("Start auto update");
             setTimeout(updateValueHandler, 1000);
             activeUpdate = true;
+
+            toggleUpdateButtons(activeUpdate);
         };
 
         const stopUpdateButtonClickHandler  = () => {
             console.log("Stop auto update");
             activeUpdate = false;
+
+            toggleUpdateButtons(activeUpdate);
+
         };
   
          const updateValueHandler  = () => {
@@ -119,14 +124,13 @@
             valueLabel.innerHTML = Http.responseText;
          };
 
-           const manualUptButton = document.getElementById("manual-button");
-           manualUptButton.addEventListener("click", manualUptButtonClickHandler );
-
            const startUpdateButton = document.getElementById("start-update-button");
            startUpdateButton.addEventListener("click", startUpdateButtonClickHandler );
 
            const stopUpdateButton = document.getElementById("stop-update-button");
            stopUpdateButton.addEventListener("click", stopUpdateButtonClickHandler );
+
+           toggleUpdateButtons(activeUpdate);
 
     </script>
     
