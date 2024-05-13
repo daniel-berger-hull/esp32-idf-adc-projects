@@ -1,4 +1,9 @@
 
+
+Next Steps:
+  Big payload: Send big payload to Web Page and see if HTTP comm. could handle sending a voice signal...
+  
+
 May 7
 =====
 
