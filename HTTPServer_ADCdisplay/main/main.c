@@ -9,25 +9,6 @@
 
 #include "main.h"
 
-/* 
-
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <esp_log.h>
-#include <nvs_flash.h>
-#include <sys/param.h>
-#include "esp_netif.h"
-#include "protocol_examples_common.h"
-#include "protocol_examples_utils.h"
-#include "esp_tls_crypto.h"
-#include <esp_http_server.h>
-#include "esp_event.h"
-#include "esp_netif.h"
-#include "esp_tls.h"
-#include "esp_check.h"
-
-#include "driver/gpio.h"  */
 
 
 #if !CONFIG_IDF_TARGET_LINUX
@@ -45,13 +26,57 @@
 static uint8_t s_green_led_state = 0;
 static uint8_t s_red_led_state = 0;
 
-
-
-
 static const char *TAG = "example";
 
 static void configure_led(void);
 void blink_green_led_task(void* arg);
+
+static void check_efuse()
+{
+    //Check TP is burned into eFuse
+    if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP) == ESP_OK) {
+        printf("eFuse Two Point: Supported\n");
+    } else {
+        printf("eFuse Two Point: NOT supported\n");
+    }
+
+    //Check Vref is burned into eFuse
+    if (esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_VREF) == ESP_OK) {
+        printf("eFuse Vref: Supported\n");
+    } else {
+        printf("eFuse Vref: NOT supported\n");
+    }
+}
+
+static void print_char_val_type(esp_adc_cal_value_t val_type)
+{
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+        printf("Characterized using Two Point Value\n");
+    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+        printf("Characterized using eFuse Vref\n");
+    } else {
+        printf("Characterized using Default Vref\n");
+    }
+}
+
+
+static void initADC()
+{
+    check_efuse();
+
+     //Configure ADC
+    if (unit == ADC_UNIT_1) {
+        adc1_config_width(ADC_WIDTH_BIT_12);
+        adc1_config_channel_atten(channel, atten);
+    } else {
+        adc2_config_channel_atten((adc2_channel_t)channel, atten);
+    }
+
+    //Characterize ADC
+    adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
+    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
+    print_char_val_type(val_type);
+}
 
 
 static void configure_led(void)
@@ -65,15 +90,43 @@ static void configure_led(void)
     gpio_set_direction(GREEN_LED_GPIO, GPIO_MODE_OUTPUT);
 }
 
-void blink_green_led_task(void* arg)
+static void blink_green_led_task(void* arg)
 {
     while(1) {
         s_green_led_state = !s_green_led_state;
-        s_red_led_state = !s_red_led_state;
+       // s_red_led_state = !s_red_led_state;
 
         gpio_set_level(GREEN_LED_GPIO, s_green_led_state);
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+}
+
+ static void adc_read_thread(void* arg)
+ {
+    while(1) {
+        // Will flash a red led, to indicate that the reading thread runs and adc conversion occurs
+        s_red_led_state = !s_red_led_state;
+        gpio_set_level( RED_LED_GPIO , s_red_led_state);
+
+        uint32_t adc_reading = 0;
+        //Multisampling
+        for (int i = 0; i < NO_OF_SAMPLES; i++) {
+            if (unit == ADC_UNIT_1) {
+                adc_reading += adc1_get_raw((adc1_channel_t)channel);
+            } else {
+                int raw;
+                adc2_get_raw((adc2_channel_t)channel, ADC_WIDTH_BIT_12, &raw);
+                adc_reading += raw;
+            }
+        }
+
+        current_adc_reading = adc_reading / NO_OF_SAMPLES;
+        
+        uint32_t voltage = esp_adc_cal_raw_to_voltage(current_adc_reading, adc_chars);
+       // printf("Raw: %lu\tVoltage: %lu mV\n", current_adc_reading, voltage);
+        
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
@@ -98,9 +151,6 @@ static esp_err_t indexpage_get_handler(httpd_req_t *req)
         free(buf);
     }
 
-
-  
-
     /* Send response with custom headers and body set as the
      * string passed in user context*/
     const char* resp_str = (const char*) req->user_ctx;
@@ -123,13 +173,19 @@ static esp_err_t indexpage_get_handler(httpd_req_t *req)
 /* This method return an analog read to the client page */
 static esp_err_t update_get_handler(httpd_req_t *req)
 {
-    char*  buf;
+    //char*  buf;
     
 
     char buffer[8];
-    uint32_t value = esp_random() & 0x00000FFF;      
-    sprintf(buffer,"%lu\n", value );
-    printf("%lu\n", value );
+   // uint32_t value = esp_random() & 0x00000FFF;   
+   // sprintf(buffer,"%lu\n", value );
+   // printf("%lu\n", value );
+
+   
+
+    
+    sprintf(buffer,"%lu\n", current_adc_reading );
+ //   printf("%lu\n", current_adc_reading );
 
 
     //const char* resp_str = (const char*) req->user_ctx;
@@ -137,56 +193,14 @@ static esp_err_t update_get_handler(httpd_req_t *req)
     
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
 
+    //****  what is HTTPD_RESP_USE_STRLEN?? The example on ESP32 site mentions something like  httpd_resp_send(req, resp, strlen(resp));
+
     return ESP_OK;
 }
 
 
 
-/* An HTTP POST handler */
-static esp_err_t echo_post_handler(httpd_req_t *req)
-{
-    char buf[100];
-    int ret, remaining = req->content_len;
 
-    while (remaining > 0) {
-        /* Read the data for the request */
-        if ((ret = httpd_req_recv(req, buf,
-                        MIN(remaining, sizeof(buf)))) <= 0) {
-            if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
-                /* Retry receiving if timeout occurred */
-                continue;
-            }
-            return ESP_FAIL;
-        }
-
-        /* Send back the same data */
-        httpd_resp_send_chunk(req, buf, ret);
-        remaining -= ret;
-
-        /* Log data received */
-        ESP_LOGI(TAG, "=========== RECEIVED DATA ==========");
-        ESP_LOGI(TAG, "%.*s", ret, buf);
-        ESP_LOGI(TAG, "====================================");
-    }
-
-    // End response
-    httpd_resp_send_chunk(req, NULL, 0);
-    return ESP_OK;
-}
-
-
-/* An HTTP_ANY handler */
-static esp_err_t any_handler(httpd_req_t *req)
-{
-    /* Send response with body set as the
-     * string passed in user context*/
-    const char* resp_str = (const char*) req->user_ctx;
-    httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
-
-    // End response
-    httpd_resp_send_chunk(req, NULL, 0);
-    return ESP_OK;
-}
 
 
 /* This handler allows the custom error handling functionality to be
@@ -241,10 +255,8 @@ static httpd_handle_t start_webserver(void)
         // Any HTTP request has to be added below...
         httpd_register_uri_handler(server, &indexpage);    // This method will serve the control web page
         httpd_register_uri_handler(server, &update_get);   // This method will provide the page with the update of the value red by the ESP32 GPIO
-        httpd_register_uri_handler(server, &any);          // This is may be removed?
 
         
-
 
         #if CONFIG_EXAMPLE_BASIC_AUTH
         httpd_register_basic_auth(server);
@@ -305,6 +317,9 @@ void app_main(void)
      */
     ESP_ERROR_CHECK(example_connect());
 
+    //Check if Two Point or Vref are burned into eFuse
+    initADC();
+
     /* Register event handlers to stop the server when Wi-Fi or Ethernet is disconnected,
      * and re-start it upon connection.
      */
@@ -324,8 +339,13 @@ void app_main(void)
 
     configure_led();
     xTaskCreate(blink_green_led_task, "blink_green_led_task", 2048, NULL, 5, NULL);
+    xTaskCreate(adc_read_thread, "adc_read_thread", 2048, NULL, 5, NULL);
+
+    
 
     while (server) {
-        sleep(5);
+
+        vTaskDelay(pdMS_TO_TICKS(250));
+        //sleep(5);
     }
 }

@@ -84,6 +84,8 @@
         
         const Http = new XMLHttpRequest();
         const url='http://10.0.0.250/update';
+      
+        
         
         var activeUpdate = false;
 
@@ -96,10 +98,11 @@
     
         const startUpdateButtonClickHandler  = () => {
             console.log("Start auto update");
-            setTimeout(updateValueHandler, 1000);
             activeUpdate = true;
 
             toggleUpdateButtons(activeUpdate);
+            setTimeout(updateValueHandler, 300);
+
         };
 
         const stopUpdateButtonClickHandler  = () => {
@@ -116,12 +119,13 @@
             Http.open("GET", url);
             Http.send(); 
 
-            if (activeUpdate)        setTimeout(updateValueHandler, 1000);
+            if (activeUpdate)        setTimeout(updateValueHandler, 300);           
          };
 
          Http.onreadystatechange = (e) => {
             const valueLabel = document.getElementById("current-Value-label");
             valueLabel.innerHTML = Http.responseText;
+            
          };
 
            const startUpdateButton = document.getElementById("start-update-button");

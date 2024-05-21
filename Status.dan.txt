@@ -1,30 +1,54 @@
 
 
-Next Steps:
-  Big payload: Send big payload to Web Page and see if HTTP comm. could handle sending a voice signal...
+May 15
+=======
+
+  *** Analysis of the problem of 'cancel request' with the project HTTPServer_ADCdisplay ***
+
+  Finding #1: 
+  The HTTP transaction on ESP32 appears to have a latency in the mSec, regardless of the content size.
+  Re tried with the 'simple' code example, and end up with the following Payload size / time:
+      
+                                    Size        Response time
+                                    142B    --> 381 mSec
+                                    8.8Kb   --> 409 mSec
+                                    96Kb    --> 698 mSec
+    
+  This show that it takes a lot of time of the ESP32 to respond, even if few bytes are returned (142B is almost nothing)
+
+  Finding #2: 
+  There is a way to keep your socket, and the project 'protocols\http_server\persistent_sockets' shows how
+  But it may not fix the problem
+
+  Finding #3: 
+  Perhaps, the most viable path is to use web sockets. I tried and it appears to be promising...
+  See the project 
+            \esp32-idf-adc-projects\ws_echo_server
+
+   To Do:
+     Try to have faster request rate and see what happens (currently 5 sec, so way too much)
+     Try to send bigger payload
+     Try to have the server send data on periodic interval, and not only echo from the client HTML page (what is curently done)
+     Try to have a better HTML page (the current one is only a white page)
+
+
+May 13
+=======
+
+  
+  Added a ADC thread and it sends the value red to the HTML page.
+  A red led is blinking, when reading is done.
+  Increase the Javascript HTTP call rate (every200 mSec)
   
 
-May 7
-=====
-
-  Included a better HTML page for the control, with better styling and javascript inside
-  Improved the compress.py script
-  The HTML page is polling now the ESP32 server, and fetch a random value (fake milliVolt)
-
- To Do:
-   Improve the CSS of the HTML  (The header of the control-box)
-   Study carefully all the method of the main.c (some are GET some are POST)
-   Include the ADC reading code
-   Push the value red to the web page (instead of the current random value)
-   Add an indicator on the Web Page to show if the ESP32 appears up or down (like a red/green led on the screen)
+  Warning: A LOT of HTTP calls are canceld!
+           Try to understand why...
 
 
 
- Next:
-   Another milestrong will be to send chunk of values, instead of only one ADC values (10? 100? more?)
-   Have a graph on the web page to see the values over time
-   Consider Web Socket later?
-   
+
+Study carefully all the method of the main.c (some are GET some are POST)
+
 May 6
 =====
 
