@@ -1,0 +1,13 @@
+HTTPServer_ADCdisplay
+--------------------
+
+  Simple HTTP server that serve an index.html page on which you can see the ADC reading done on pin GPIO34
+  (ADC1 :: ADC_CHANNEL_6)
+
+  Status: The page is flicking as the http refresh rate is very low
+
+
+ws_echo_server
+--------------
+
+  A Web Socket project, that serve an index.html. The goal of this project is to experiment with Web Socket

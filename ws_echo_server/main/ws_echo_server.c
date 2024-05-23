@@ -22,17 +22,38 @@
 
 #include "esp_check.h"
 
+#include "driver/gpio.h"
+
+
+#define RED_LED_GPIO   23
+#define GREEN_LED_GPIO 22
+
 
 /* A simple example that demonstrates using websocket echo server
  */
 static const char *TAG = "ws_echo_server";
 
 const static char http_index_hml[] =
-"<!doctype html><h2>WebSocket Test</h2><p>Sends a ping every five seconds</p><div id=\"output\"></div><script>  const wsUri = \"ws://10.0.0.250/ws\";  const output = document.querySelector(\"#output\");  const websocket = new WebSocket(wsUri);  let pingInterval;  function writeToScreen(message) {    output.innerHTML = `<p>${message}</p>`;  }  function sendMessage(message) {    writeToScreen(`SENT: ${message}`);    websocket.send(message);  }  websocket.onopen = (e) => {    writeToScreen(\"CONNECTED\");    sendMessage(\"ping\");    pingInterval = setInterval(() => {      sendMessage(\"ping\");    }, 5000);  };  websocket.onclose = (e) => {    writeToScreen(\"DISCONNECTED\");    clearInterval(pingInterval);  };  websocket.onmessage = (e) => {    writeToScreen(`RECEIVED: ${e.data}`);  };  websocket.onerror = (e) => {    writeToScreen(`ERROR: ${e.data}`);  };</script>";
-//"<!doctype html><h2>WebSocket Test</h2><p>Sends a ping every five seconds</p><div id=\"output\"></div><script>  const wsUri = \"ws://10.0.0.250/ws\";  const output = document.querySelector(\"#output\");  const websocket = new WebSocket(wsUri);  let pingInterval;  function writeToScreen(message) {    output.innerHTML(`<p>${message}</p>`);  }  function sendMessage(message) {    writeToScreen(`SENT: ${message}`);    websocket.send(message);  }  websocket.onopen = (e) => {    writeToScreen(\"CONNECTED\");    sendMessage(\"ping\");    pingInterval = setInterval(() => {      sendMessage(\"ping\");    }, 5000);  };  websocket.onclose = (e) => {    writeToScreen(\"DISCONNECTED\");    clearInterval(pingInterval);  };  websocket.onmessage = (e) => {    writeToScreen(`RECEIVED: ${e.data}`);  };  websocket.onerror = (e) => {    writeToScreen(`ERROR: ${e.data}`);  };</script>";
-//"<!doctype html><h2>WebSocket Test</h2><p>Sends a ping every five seconds</p><div id=\"output\"></div><script>  const wsUri = \"ws://10.0.0.250/ws\";  const output = document.querySelector(\"#output\");  const websocket = new WebSocket(wsUri);  let pingInterval;  function writeToScreen(message) {    output.insertAdjacentHTML(\"afterbegin\", `<p>${message}</p>`);  }  function sendMessage(message) {    writeToScreen(`SENT: ${message}`);    websocket.send(message);  }  websocket.onopen = (e) => {    writeToScreen(\"CONNECTED\");    sendMessage(\"ping\");    pingInterval = setInterval(() => {      sendMessage(\"ping\");    }, 5000);  };  websocket.onclose = (e) => {    writeToScreen(\"DISCONNECTED\");    clearInterval(pingInterval);  };  websocket.onmessage = (e) => {    writeToScreen(`RECEIVED: ${e.data}`);  };  websocket.onerror = (e) => {    writeToScreen(`ERROR: ${e.data}`);  };</script>";
-//"<!doctype html><h2>WebSocket Test</h2><p>Sends a ping every five seconds</p><div id=\"output\"></div><script>  const wsUri = \"ws://10.0.0.250/\";  const output = document.querySelector(\"#output\");  const websocket = new WebSocket(wsUri);  let pingInterval;  function writeToScreen(message) {    output.insertAdjacentHTML(\"afterbegin\", `<p>${message}</p>`);  }  function sendMessage(message) {    writeToScreen(`SENT: ${message}`);    websocket.send(message);  }  websocket.onopen = (e) => {    writeToScreen(\"CONNECTED\");    sendMessage(\"ping\");    pingInterval = setInterval(() => {      sendMessage(\"ping\");    }, 5000);  };  websocket.onclose = (e) => {    writeToScreen(\"DISCONNECTED\");    clearInterval(pingInterval);  };  websocket.onmessage = (e) => {    writeToScreen(`RECEIVED: ${e.data}`);  };  websocket.onerror = (e) => {    writeToScreen(`ERROR: ${e.data}`);  };</script>";
-//"<!DOCTYPE html><html lang=\"en\"><head>    <meta charset=\"UTF-8\">    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">    <title>Pool Monitor</title>    <style>        html {            height: 100%;        }        body {            height: 100%;            background-image: linear-gradient(#4D1496, #7D32BF);            background-repeat: no-repeat;            color: white;        }        .wrapper {            width: 40%;            margin: auto;        }        .control-box {            display: flex;            flex-direction: column;                     border: 1px solid #7D52B7;            border-radius: 0px 0px 10px 10px;        }        .control-box-header {            background-color: #DBD5F1;            color: #5C369F;            border-bottom: 1px solid #7D52B7;        }        .medium-box {            width: 250px;        }        .line-of-items {            display: flex;            margin: auto;            margin-bottom: 5px;            text-align: center;        }        .line-of-items .col {            width: 50px;        }        .in-the-middle {            justify-content: center;        }    </style></head><body>    <div class=\"wrapper\">        <h1>ESP32 ADC Reading</h1>        <div class=\"control-box medium-box\">            <div class=\"control-box-header\">Whole House</div>            <div class=\"line-of-items\">                <div  class=\"col\">Current</div>                    <div id=\"current-Value-label\"  class=\"col\">20</div>                    <div  class=\"col\">mV</div>                </div>                        <div class=\"line-of-items\"><div>Automatic Update</div></div>                        <div class=\"line-of-items\">                <button id=\"start-update-button\" class=\"in-the-middle\">Start</button>                <button id=\"stop-update-button\" class=\"in-the-middle\">Stop</button>            </div>            </div>    </div>       <script>                const Http = new XMLHttpRequest();        const url='http://10.0.0.250/update';                              var activeUpdate = false;        const toggleUpdateButtons = (running) => {            document.getElementById(\"start-update-button\").disabled = running;            document.getElementById(\"stop-update-button\").disabled = !running;                   };            const startUpdateButtonClickHandler  = () => {            console.log(\"Start auto update\");            activeUpdate = true;            toggleUpdateButtons(activeUpdate);            setTimeout(updateValueHandler, 300);        };        const stopUpdateButtonClickHandler  = () => {            console.log(\"Stop auto update\");            activeUpdate = false;            toggleUpdateButtons(activeUpdate);        };           const updateValueHandler  = () => {            console.log(\"Handler of update of value: Request to \" + url);            Http.open(\"GET\", url);            Http.send();             if (activeUpdate)        setTimeout(updateValueHandler, 300);                    };         Http.onreadystatechange = (e) => {            const valueLabel = document.getElementById(\"current-Value-label\");            valueLabel.innerHTML = Http.responseText;                     };           const startUpdateButton = document.getElementById(\"start-update-button\");           startUpdateButton.addEventListener(\"click\", startUpdateButtonClickHandler );           const stopUpdateButton = document.getElementById(\"stop-update-button\");           stopUpdateButton.addEventListener(\"click\", stopUpdateButtonClickHandler );           toggleUpdateButtons(activeUpdate);    </script>    </body></html>";
+"<!DOCTYPE html><html lang=\"en\"><head>    <meta charset=\"UTF-8\">    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">    <title>ESP32 Web Socket</title>    <style>        html {            height: 100%;        }        body {            height: 100%;            background-image: linear-gradient(#4D1496, #7D32BF);            background-repeat: no-repeat;            color: white;        }        .wrapper {            width: 40%;            margin: auto;        }        .control-box {            display: flex;            flex-direction: column;                     border: 1px solid #7D52B7;            border-radius: 0px 0px 10px 10px;        }        .control-box-header {            background-color: #DBD5F1;            color: #5C369F;            border-bottom: 1px solid #7D52B7;        }        .medium-box {            width: 250px;        }        .line-of-items {            display: flex;            margin: auto;            margin-bottom: 5px;            text-align: center;        }        .line-of-items .col {            width: 50px;        }        .in-the-middle {            justify-content: center;        }        .slidecontainer {             width: 100%;         }           </style></head><body>    <div class=\"wrapper\">        <h1>ESP32 Web Socket Test</h1>        <div class=\"control-box medium-box\">            <div class=\"control-box-header\">Whole House</div>            <div class=\"line-of-items\">                <div  class=\"col\">Current:</div>                    <div id=\"current-Value-label\"  class=\"col\">20</div>                </div>                        <div class=\"line-of-items\"><div>Automatic Update</div></div>                        <div class=\"line-of-items\">                <button id=\"start-update-button\" class=\"in-the-middle\">Start</button>                <button id=\"stop-update-button\" class=\"in-the-middle\">Stop</button>            </div>            <div class=\"line-of-items\"><div>Transfer Rate</div></div>            <div class=\"line-of-items\">                            <div class=\"slidecontainer\">                    <input type=\"range\" min=\"1\" max=\"100\" value=\"50\" class=\"slider\" id=\"myRange\">                    <p>Value: <span id=\"transferspeed\"></span></p>                </div>            </div>            </div>    </div>       <script>                const Http = new XMLHttpRequest();        const url='http://10.0.0.250/update';              var activeUpdate = false;        	                  const toggleUpdateButtons = (running) => {            document.getElementById(\"start-update-button\").disabled = running;            document.getElementById(\"stop-update-button\").disabled = !running;                   };            const startTransferButtonClickHandler  = () => {            console.log(\"Start transfer Handler\");            activeUpdate = true;            toggleUpdateButtons(activeUpdate);                      Http.open(\"GET\", 'http://10.0.0.250/start');            Http.send();         };        const stopTransferButtonClickHandler  = () => {            console.log(\"Stop transfer Handler\");            activeUpdate = false;            toggleUpdateButtons(activeUpdate);            Http.open(\"GET\", 'http://10.0.0.250/stop');            Http.send();         };           const updateValueHandler  = () => {            console.log(\"Handler of update of value: Request to \" + url);            Http.open(\"GET\", url);            Http.send();             if (activeUpdate)        setTimeout(updateValueHandler, 300);                    };         Http.onreadystatechange = (e) => {            const valueLabel = document.getElementById(\"current-Value-label\");            valueLabel.innerHTML = Http.responseText;                     };         const updateTransferRateHandler  = () => {            transferspeed.innerHTML = slider.value;         };                    const startTransferButton = document.getElementById(\"start-update-button\");           startTransferButton.addEventListener(\"click\", startTransferButtonClickHandler );           const stopTransferButton = document.getElementById(\"stop-update-button\");           stopTransferButton.addEventListener(\"click\", stopTransferButtonClickHandler );           const slider = document.getElementById(\"myRange\");           slider.addEventListener(\"input\", updateTransferRateHandler );           	     var transferspeed = document.getElementById(\"transferspeed\");          transferspeed.innerHTML = slider.value;          toggleUpdateButtons(activeUpdate);    </script>    </body></html>";
+
+
+static void configure_led(void);
+static void blink_green_led_task(void* arg);
+static esp_err_t indexpage_get_handler(httpd_req_t *req);
+static void ws_async_send(void *arg);
+static esp_err_t trigger_async_send(httpd_handle_t handle, httpd_req_t *req);
+static esp_err_t echo_handler(httpd_req_t *req);
+static httpd_handle_t start_webserver(void);
+static esp_err_t stop_webserver(httpd_handle_t server);
+static void transfer_to_client_led_task(void* arg);
+
+
+
+static uint8_t s_green_led_state = 0;
+static uint8_t s_red_led_state = 0;
+
+static uint8_t s_transfer_active = 0;
+
 
 
 /*
@@ -45,6 +66,35 @@ struct async_resp_arg {
     int fd;
 };
 
+
+
+static void configure_led(void)
+{
+    ESP_LOGI(TAG, "Web Server configured to blink green LED on GPIO #22");
+
+    gpio_reset_pin(RED_LED_GPIO);
+    gpio_set_direction(RED_LED_GPIO, GPIO_MODE_OUTPUT);
+
+    gpio_reset_pin(GREEN_LED_GPIO);
+    gpio_set_direction(GREEN_LED_GPIO, GPIO_MODE_OUTPUT);
+}
+
+static void transfer_to_client_led_task(void* arg)
+{
+
+    ESP_LOGI(TAG, "Starting transfer thread...");
+    while(1) {
+
+        if (s_transfer_active)
+        {
+             s_green_led_state = !s_green_led_state;
+            // s_red_led_state = !s_red_led_state;
+            gpio_set_level(GREEN_LED_GPIO, s_green_led_state);
+        }
+       
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+}
 
 
 /* An HTTP GET handler */
@@ -131,6 +181,13 @@ static esp_err_t echo_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
         return ESP_OK;
     }
+    else 
+    {  
+          ESP_LOGI(TAG, "req->method is %d", req->method);
+
+    }
+
+
     httpd_ws_frame_t ws_pkt;
     uint8_t *buf = NULL;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
@@ -183,6 +240,61 @@ static const httpd_uri_t ws = {
 };
 
 
+/* This method return an analog read to the client page */
+static esp_err_t start_transfer_handler(httpd_req_t *req)
+{
+    char buffer[20];
+
+     ESP_LOGI(TAG, "start_transfer_handler");
+ 
+    
+    sprintf(buffer,"%s\n", "Start Transfer.." );
+
+    const char* resp_str = (const char*)buffer;
+    
+    httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
+
+    s_transfer_active = 1;
+
+    return ESP_OK;
+}
+
+static const httpd_uri_t start_transfer = {
+    .uri       = "/start",
+    .method    = HTTP_GET,
+    .handler   = start_transfer_handler,
+    .user_ctx  = "Hello World!"
+};
+
+
+/* This method return an analog read to the client page */
+static esp_err_t stop_transfer_handler(httpd_req_t *req)
+{
+    char buffer[20];
+
+     ESP_LOGI(TAG, "stop_transfer_handler");
+ 
+    
+    sprintf(buffer,"%s\n", "Stop Transfer" );
+
+    const char* resp_str = (const char*)buffer;
+    
+    httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
+
+    s_transfer_active = 0;
+
+    return ESP_OK;
+}
+
+static const httpd_uri_t stop_transfer = {
+    .uri       = "/stop",
+    .method    = HTTP_GET,
+    .handler   = stop_transfer_handler,
+    .user_ctx  = "Hello World!"
+};
+
+
+
 static httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
@@ -195,12 +307,16 @@ static httpd_handle_t start_webserver(void)
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &indexpage);    // This method will serve the control web page
         httpd_register_uri_handler(server, &ws);
+        httpd_register_uri_handler(server, &start_transfer);
+        httpd_register_uri_handler(server, &stop_transfer);
+
         return server;
     }
 
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
 }
+
 
 static esp_err_t stop_webserver(httpd_handle_t server)
 {
@@ -259,6 +375,14 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_DISCONNECTED, &disconnect_handler, &server));
 #endif // CONFIG_EXAMPLE_CONNECT_ETHERNET
 
-    /* Start the server for the first time */
     server = start_webserver();
+
+     xTaskCreate(transfer_to_client_led_task, "transfer_to_client_led_task", 2048, NULL, 5, NULL);
+
+
+     configure_led();
+
+       while (server) {
+        vTaskDelay(pdMS_TO_TICKS(250));
+    }
 }

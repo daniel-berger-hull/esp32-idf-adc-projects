@@ -1,5 +1,37 @@
 
 
+May 22
+=======
+
+ Implemented a start and stop method in the main.c and inside the index.html.
+ The events on the ESP32 are received and the app is reacting ok.
+ Create a thread to transfer and  blink the green light --> Will indicate when transfer to client is in progress...
+
+ Error: You can't exit a worker thread that you created with the xTaskCreate method!
+        Once you exit the while loop of the thread, the ESP32 reboots!
+        Worked around the problem by not leaving the working thread, but there should be a more
+        elegent way...
+
+ To Do:
+   Find how to send data back to client: So far, I only rely to HTTP GET, which give all the context.
+   Next is to send HTTP data (with ws_async_send method), but from a thread???
+
+   
+
+May 21
+=======
+  
+  ws_echo_server: Did add a slider to the HTML page, to control the transfer rate
+
+  To Do:
+    Need to find a method that the ESP32 send data (one way only) to the HTML page
+    Add a Start http method, so that the ESP32 can know when to start the transfer to the web page
+    Add a Stop http method (opposite of start)
+    Note: Where to pass the transfer rate? As param in the start http method? Or add a seperated method?
+
+    
+
+
 May 15
 =======
 
@@ -30,6 +62,8 @@ May 15
      Try to send bigger payload
      Try to have the server send data on periodic interval, and not only echo from the client HTML page (what is curently done)
      Try to have a better HTML page (the current one is only a white page)
+
+
 
 
 May 13
