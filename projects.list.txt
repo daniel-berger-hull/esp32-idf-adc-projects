@@ -11,3 +11,9 @@ ws_echo_server
 --------------
 
   A Web Socket project, that serve an index.html. The goal of this project is to experiment with Web Socket
+
+ws_data_server
+--------------
+
+ This is a copy of the 'ws_echo_server', but with async server pushes that can be seen in the client HTML.
+ 
