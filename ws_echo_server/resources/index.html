@@ -48,7 +48,7 @@
         }
 
         .line-of-items .col {
-            width: 50px;
+            width: 70px;
         }
 
         .in-the-middle {
@@ -71,8 +71,8 @@
         <div class="control-box medium-box">
             <div class="control-box-header">Whole House</div>
             <div class="line-of-items">
-                <div  class="col">Current:</div>    
-                <div id="current-Value-label"  class="col">20</div>    
+                <div  class="col">Status:</div>    
+                <div id="connection-status-label"  class="col"></div>    
             </div>
             
             <div class="line-of-items"><div>Automatic Update</div></div>
@@ -95,14 +95,42 @@
    
     <script>
         
-        const Http = new XMLHttpRequest();
-        const url='http://10.0.0.250/update';
+		const wsUri = "ws://10.0.0.250/ws";
+
+        console.log('Will try to open the WebSocket on ' + wsUri);
+    	const websocket = new WebSocket(wsUri);
+		
+		
       
-
         var activeUpdate = false;
-        	
-     
+		
+		const displayConnectionStatus = (state) => {
+			
+			const connectStatus = document.querySelector("#connection-status-label");
+			connectStatus.innerHTML = state;
+		};
+		
 
+		websocket.onopen = (e) => {
+		 console.log('CONNECTED Event');
+		 displayConnectionStatus('Connected');
+		};
+
+		websocket.onclose = (e) => {
+		   console.log('DISCONNECTED Event');
+		   displayConnectionStatus('Connected');
+		};
+		
+		websocket.onmessage = (e) => {
+		  console.log('onmessage Event');
+		  writeToScreen(`RECEIVED: ${e.data}`);
+		};
+
+		websocket.onerror = (e) => {
+		  console.log('onerror Event');
+		  displayConnectionStatus('Error');
+		};
+        	
      
         const toggleUpdateButtons = (running) => {
 
@@ -117,8 +145,7 @@
 
             toggleUpdateButtons(activeUpdate);
           
-            Http.open("GET", 'http://10.0.0.250/start');
-            Http.send(); 
+          
 
         };
 
@@ -128,24 +155,18 @@
 
             toggleUpdateButtons(activeUpdate);
 
-            Http.open("GET", 'http://10.0.0.250/stop');
-            Http.send(); 
+          
         };
   
          const updateValueHandler  = () => {
             console.log("Handler of update of value: Request to " + url);
 
-            Http.open("GET", url);
-            Http.send(); 
+           
 
             if (activeUpdate)        setTimeout(updateValueHandler, 300);           
          };
 
-         Http.onreadystatechange = (e) => {
-            const valueLabel = document.getElementById("current-Value-label");
-            valueLabel.innerHTML = Http.responseText;
-            
-         };
+        
 
          const updateTransferRateHandler  = () => {
             transferspeed.innerHTML = slider.value;

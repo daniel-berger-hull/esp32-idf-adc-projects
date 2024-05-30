@@ -1,4 +1,61 @@
 
+May 28 
+================
+
+Still trying to find a way to send bigger payload when the ESP32 reply to the HTML page (a ping message).
+
+The WebSocket code on the ESP32 is using the method 'httpd_ws_send_frame' and not the one I tought ('trigger_async_send').
+
+The problem resides in building a return frame, and find the right way to force the 'httpd_ws_recv_frame'
+to accept a payload lenght that is bigger than 4 (the initial size of the message 'ping' from the HTML page)
+
+
+May 27 (Update)
+================
+
+
+Check this video, as it may have a very good element of a solution to the websocket problem
+   https://www.youtube.com/watch?v=fmZok-zgXRg
+
+It points to the following Code:
+
+https://github.com/SIMS-IOT-Devices/FreeRTOS-ESP-IDF-WebSockets-Server
+
+Note: I may need to enable the WebSocket, in the menu config of the ESP32
+
+Note2:  That one appears very promising too. It include a web page written on the SPIFF!
+        And led to control..
+
+      https://esp32tutorials.com/esp32-esp-idf-websocket-web-server/
+
+May 27
+======
+
+ Added a callback function on the ESP32: It tries to call the HTML page
+ Tried the HTML page in the testscript folder, but it doesnt work
+
+ NOTE: After some thoughts, the current Javascript in the resources\index.html does NOT create a websocket!
+       I just tries to connect to the ESP32 with a regular HTTP request (with a XMLHttpRequest object).
+       The javascript in the other folder (testscript) is maybe too agressive: It tries to open a web socket
+       at load time...
+
+     Explore the following example I created with NodeJS (Has a nice page also)
+        C:\data\workspaces\Javascript\Basics\websockets\simpletest
+    
+
+
+ To Do:
+    Need to add web socket method in the HTML that works
+
+    
+
+
+
+May 24
+======
+
+ Try to debug using gdb (ESP32 has the stenxa-gbd)
+ Appears to be easier if using Eclipse
 
 May 22
 =======

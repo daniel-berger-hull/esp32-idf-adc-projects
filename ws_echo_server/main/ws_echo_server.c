@@ -34,7 +34,11 @@
 static const char *TAG = "ws_echo_server";
 
 const static char http_index_hml[] =
-"<!DOCTYPE html><html lang=\"en\"><head>    <meta charset=\"UTF-8\">    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">    <title>ESP32 Web Socket</title>    <style>        html {            height: 100%;        }        body {            height: 100%;            background-image: linear-gradient(#4D1496, #7D32BF);            background-repeat: no-repeat;            color: white;        }        .wrapper {            width: 40%;            margin: auto;        }        .control-box {            display: flex;            flex-direction: column;                     border: 1px solid #7D52B7;            border-radius: 0px 0px 10px 10px;        }        .control-box-header {            background-color: #DBD5F1;            color: #5C369F;            border-bottom: 1px solid #7D52B7;        }        .medium-box {            width: 250px;        }        .line-of-items {            display: flex;            margin: auto;            margin-bottom: 5px;            text-align: center;        }        .line-of-items .col {            width: 50px;        }        .in-the-middle {            justify-content: center;        }        .slidecontainer {             width: 100%;         }           </style></head><body>    <div class=\"wrapper\">        <h1>ESP32 Web Socket Test</h1>        <div class=\"control-box medium-box\">            <div class=\"control-box-header\">Whole House</div>            <div class=\"line-of-items\">                <div  class=\"col\">Current:</div>                    <div id=\"current-Value-label\"  class=\"col\">20</div>                </div>                        <div class=\"line-of-items\"><div>Automatic Update</div></div>                        <div class=\"line-of-items\">                <button id=\"start-update-button\" class=\"in-the-middle\">Start</button>                <button id=\"stop-update-button\" class=\"in-the-middle\">Stop</button>            </div>            <div class=\"line-of-items\"><div>Transfer Rate</div></div>            <div class=\"line-of-items\">                            <div class=\"slidecontainer\">                    <input type=\"range\" min=\"1\" max=\"100\" value=\"50\" class=\"slider\" id=\"myRange\">                    <p>Value: <span id=\"transferspeed\"></span></p>                </div>            </div>            </div>    </div>       <script>                const Http = new XMLHttpRequest();        const url='http://10.0.0.250/update';              var activeUpdate = false;        	                  const toggleUpdateButtons = (running) => {            document.getElementById(\"start-update-button\").disabled = running;            document.getElementById(\"stop-update-button\").disabled = !running;                   };            const startTransferButtonClickHandler  = () => {            console.log(\"Start transfer Handler\");            activeUpdate = true;            toggleUpdateButtons(activeUpdate);                      Http.open(\"GET\", 'http://10.0.0.250/start');            Http.send();         };        const stopTransferButtonClickHandler  = () => {            console.log(\"Stop transfer Handler\");            activeUpdate = false;            toggleUpdateButtons(activeUpdate);            Http.open(\"GET\", 'http://10.0.0.250/stop');            Http.send();         };           const updateValueHandler  = () => {            console.log(\"Handler of update of value: Request to \" + url);            Http.open(\"GET\", url);            Http.send();             if (activeUpdate)        setTimeout(updateValueHandler, 300);                    };         Http.onreadystatechange = (e) => {            const valueLabel = document.getElementById(\"current-Value-label\");            valueLabel.innerHTML = Http.responseText;                     };         const updateTransferRateHandler  = () => {            transferspeed.innerHTML = slider.value;         };                    const startTransferButton = document.getElementById(\"start-update-button\");           startTransferButton.addEventListener(\"click\", startTransferButtonClickHandler );           const stopTransferButton = document.getElementById(\"stop-update-button\");           stopTransferButton.addEventListener(\"click\", stopTransferButtonClickHandler );           const slider = document.getElementById(\"myRange\");           slider.addEventListener(\"input\", updateTransferRateHandler );           	     var transferspeed = document.getElementById(\"transferspeed\");          transferspeed.innerHTML = slider.value;          toggleUpdateButtons(activeUpdate);    </script>    </body></html>";
+"<!DOCTYPE html><html lang=\"en\"><head>    <meta charset=\"UTF-8\">    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">    <title>ESP32 Web Socket</title>    <style>        html {            height: 100%;        }        body {            height: 100%;            background-image: linear-gradient(#4D1496, #7D32BF);            background-repeat: no-repeat;            color: white;        }        .wrapper {            width: 40%;            margin: auto;        }        .control-box {            display: flex;            flex-direction: column;                     border: 1px solid #7D52B7;            border-radius: 0px 0px 10px 10px;        }        .control-box-header {            background-color: #DBD5F1;            color: #5C369F;            border-bottom: 1px solid #7D52B7;        }        .medium-box {            width: 250px;        }        .line-of-items {            display: flex;            margin: auto;            margin-bottom: 5px;            text-align: center;        }        .line-of-items .col {            width: 70px;        }        .in-the-middle {            justify-content: center;        }        .slidecontainer {             width: 100%;         }           </style></head><body>    <div class=\"wrapper\">        <h1>ESP32 Web Socket Test</h1>        <div class=\"control-box medium-box\">            <div class=\"control-box-header\">Whole House</div>            <div class=\"line-of-items\">                <div  class=\"col\">Status:</div>                    <div id=\"connection-status-label\"  class=\"col\"></div>                </div>                        <div class=\"line-of-items\"><div>Automatic Update</div></div>                        <div class=\"line-of-items\">                <button id=\"start-update-button\" class=\"in-the-middle\">Start</button>                <button id=\"stop-update-button\" class=\"in-the-middle\">Stop</button>            </div>            <div class=\"line-of-items\"><div>Transfer Rate</div></div>            <div class=\"line-of-items\">                            <div class=\"slidecontainer\">                    <input type=\"range\" min=\"1\" max=\"100\" value=\"50\" class=\"slider\" id=\"myRange\">                    <p>Value: <span id=\"transferspeed\"></span></p>                </div>            </div>            </div>    </div>       <script>        		const wsUri = \"ws://10.0.0.250/ws\";        console.log('Will try to open the WebSocket on ' + wsUri);    	const websocket = new WebSocket(wsUri);				              var activeUpdate = false;				const displayConnectionStatus = (state) => {						const connectStatus = document.querySelector(\"#connection-status-label\");			connectStatus.innerHTML = state;		};				websocket.onopen = (e) => {		 console.log('CONNECTED Event');		 displayConnectionStatus('Connected');		};		websocket.onclose = (e) => {		   console.log('DISCONNECTED Event');		   displayConnectionStatus('Connected');		};				websocket.onmessage = (e) => {		  console.log('onmessage Event');		  writeToScreen(`RECEIVED: ${e.data}`);		};		websocket.onerror = (e) => {		  console.log('onerror Event');		  displayConnectionStatus('Error');		};        	             const toggleUpdateButtons = (running) => {            document.getElementById(\"start-update-button\").disabled = running;            document.getElementById(\"stop-update-button\").disabled = !running;                   };            const startTransferButtonClickHandler  = () => {            console.log(\"Start transfer Handler\");            activeUpdate = true;            toggleUpdateButtons(activeUpdate);                            };        const stopTransferButtonClickHandler  = () => {            console.log(\"Stop transfer Handler\");            activeUpdate = false;            toggleUpdateButtons(activeUpdate);                  };           const updateValueHandler  = () => {            console.log(\"Handler of update of value: Request to \" + url);                       if (activeUpdate)        setTimeout(updateValueHandler, 300);                    };                 const updateTransferRateHandler  = () => {            transferspeed.innerHTML = slider.value;         };                    const startTransferButton = document.getElementById(\"start-update-button\");           startTransferButton.addEventListener(\"click\", startTransferButtonClickHandler );           const stopTransferButton = document.getElementById(\"stop-update-button\");           stopTransferButton.addEventListener(\"click\", stopTransferButtonClickHandler );           const slider = document.getElementById(\"myRange\");           slider.addEventListener(\"input\", updateTransferRateHandler );           	     var transferspeed = document.getElementById(\"transferspeed\");          transferspeed.innerHTML = slider.value;          toggleUpdateButtons(activeUpdate);    </script>    </body></html>";
+
+
+
+
 
 
 static void configure_led(void);
@@ -47,13 +51,19 @@ static httpd_handle_t start_webserver(void);
 static esp_err_t stop_webserver(httpd_handle_t server);
 static void transfer_to_client_led_task(void* arg);
 
+static esp_err_t trigger_async_send2();
+
+
+
+
+
+
 
 
 static uint8_t s_green_led_state = 0;
 static uint8_t s_red_led_state = 0;
 
 static uint8_t s_transfer_active = 0;
-
 
 
 /*
@@ -65,6 +75,29 @@ struct async_resp_arg {
     httpd_handle_t hd;
     int fd;
 };
+
+static void displayHTTPReq(httpd_req_t *req);
+static void displayResp_arg(struct async_resp_arg *resp_arg);
+
+
+
+struct async_resp_arg* clientRespArg = NULL;
+
+
+static void displayHTTPReq(httpd_req_t *req)
+{
+	printf("\thandle %p\n", req->handle );
+
+	int newFd =  httpd_req_to_sockfd(req);
+	printf("\tfd %i\n", newFd );
+
+}
+
+static void displayResp_arg(struct async_resp_arg *resp_arg)
+{
+	printf("\thandle %p\n", resp_arg->hd );
+	printf("\tfd %i\n", resp_arg->fd );
+}
 
 
 
@@ -87,11 +120,33 @@ static void transfer_to_client_led_task(void* arg)
 
         if (s_transfer_active)
         {
-             s_green_led_state = !s_green_led_state;
-            // s_red_led_state = !s_red_led_state;
-            gpio_set_level(GREEN_LED_GPIO, s_green_led_state);
+        	if (clientRespArg == NULL)
+        	{
+        		//Should be created before!!!
+
+        		 ESP_LOGI(TAG, "clientRespArg is NULL");
+      		     gpio_set_level(RED_LED_GPIO, 1);
+
+        	}
+        	else
+        	{
+
+
+        		  s_green_led_state = !s_green_led_state;
+        		            // s_red_led_state = !s_red_led_state;
+        		   gpio_set_level(GREEN_LED_GPIO, s_green_led_state);
+        		   gpio_set_level(RED_LED_GPIO, 0);
+
+        		   trigger_async_send2();
+        		   ESP_LOGI(TAG, "trigger_async_send2!!!");
+
+        	}
+
+
         }
-       
+        else
+        	gpio_set_level(GREEN_LED_GPIO, 0);
+
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
@@ -137,6 +192,7 @@ static const httpd_uri_t indexpage = {
 };
 
 
+
 /*
  * async send function, which we put into the httpd work queue
  */
@@ -171,6 +227,30 @@ static esp_err_t trigger_async_send(httpd_handle_t handle, httpd_req_t *req)
     return ret;
 }
 
+static esp_err_t trigger_async_send2()
+{
+
+
+	if (clientRespArg == NULL)
+    {
+		  return ESP_ERR_NO_MEM;
+    }
+
+	/*
+	 struct async_resp_arg *resp_arg = malloc(sizeof(struct async_resp_arg));
+	    if (resp_arg == NULL) {
+	        return ESP_ERR_NO_MEM;
+	    }
+	    resp_arg->hd = req->handle;
+	    resp_arg->fd = httpd_req_to_sockfd(req);
+	    esp_err_t ret = httpd_queue_work(handle, ws_async_send, resp_arg); */
+	    esp_err_t ret = httpd_queue_work(clientRespArg->hd, ws_async_send, clientRespArg);
+
+
+	    return ret;
+
+}
+
 /*
  * This handler echos back the received ws data
  * and triggers an async send if certain message received
@@ -184,7 +264,6 @@ static esp_err_t echo_handler(httpd_req_t *req)
     else 
     {  
           ESP_LOGI(TAG, "req->method is %d", req->method);
-
     }
 
 
@@ -193,7 +272,13 @@ static esp_err_t echo_handler(httpd_req_t *req)
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
     /* Set max_len = 0 to get the frame len */
+    //esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+
+
     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+
+
+
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "httpd_ws_recv_frame failed to get frame len with %d", ret);
         return ret;
@@ -201,7 +286,10 @@ static esp_err_t echo_handler(httpd_req_t *req)
     ESP_LOGI(TAG, "frame len is %d", ws_pkt.len);
     if (ws_pkt.len) {
         /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
-        buf = calloc(1, ws_pkt.len + 1);
+        //buf = calloc(1, ws_pkt.len + 1);
+        buf = calloc(1, ws_pkt.len + 100);
+
+
         if (buf == NULL) {
             ESP_LOGE(TAG, "Failed to calloc memory for buf");
             return ESP_ERR_NO_MEM;
@@ -217,11 +305,24 @@ static esp_err_t echo_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
     }
     ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
+
+    displayHTTPReq(req);
+
+
     if (ws_pkt.type == HTTPD_WS_TYPE_TEXT &&
         strcmp((char*)ws_pkt.payload,"Trigger async") == 0) {
         free(buf);
+        ESP_LOGI(TAG, "Invoked trigger_async_send...");
+
         return trigger_async_send(req->handle, req);
     }
+
+    ESP_LOGI(TAG, "Invoked httpd_ws_send_frame...");
+
+
+
+
+
 
     ret = httpd_ws_send_frame(req, &ws_pkt);
     if (ret != ESP_OK) {
@@ -247,8 +348,46 @@ static esp_err_t start_transfer_handler(httpd_req_t *req)
 
      ESP_LOGI(TAG, "start_transfer_handler");
  
+
+     //
+
+
+     /*
+     static esp_err_t trigger_async_send(httpd_handle_t handle, httpd_req_t *req)
+
+
+     typedef void* httpd_handle_t;
+
+
+         if (resp_arg == NULL) {
+             return ESP_ERR_NO_MEM;
+         }
+         resp_arg->hd = req->handle;
+         resp_arg->fd = httpd_req_to_sockfd(req);
+
+
+        */
+
+
+     clientRespArg = malloc(sizeof(struct async_resp_arg));
+     clientRespArg ->hd = req->handle;
+     clientRespArg ->fd = httpd_req_to_sockfd(req);
+
+     ESP_LOGI(TAG, "Created the clientRespArg, handle is %p", clientRespArg ->hd);
+
+
+
+
+
+         //sprintf(buffer,"\thandle %p\n", req->handle );
+
+         //printf("\thandle %p\n", req->handle );
+
+         displayHTTPReq(req);
+
+
+     ///////////////////////
     
-    sprintf(buffer,"%s\n", "Start Transfer.." );
 
     const char* resp_str = (const char*)buffer;
     
@@ -258,6 +397,9 @@ static esp_err_t start_transfer_handler(httpd_req_t *req)
 
     return ESP_OK;
 }
+
+
+
 
 static const httpd_uri_t start_transfer = {
     .uri       = "/start",
@@ -279,6 +421,20 @@ static esp_err_t stop_transfer_handler(httpd_req_t *req)
 
     const char* resp_str = (const char*)buffer;
     
+
+     displayHTTPReq(req);
+
+
+
+     if (clientRespArg != NULL)
+     {
+    	  //free(clientRespArg);
+    	  ESP_LOGI(TAG, "Deleted the clientRespArg...");
+     }
+
+
+
+
     httpd_resp_send(req, resp_str, HTTPD_RESP_USE_STRLEN);
 
     s_transfer_active = 0;
