@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Web Socket</title>
+
+    <style>
+        html {
+            height: 100%;
+        }
+
+        body {
+            height: 100%;
+            background-image: linear-gradient(#4D1496, #7D32BF);
+            background-repeat: no-repeat;
+            color: white;
+        }
+
+        .wrapper {
+            width: 40%;
+            margin: auto;
+        }
+
+        .control-box {
+            display: flex;
+            flex-direction: column;
+         
+            border: 1px solid #7D52B7;
+            border-radius: 0px 0px 10px 10px;
+        }
+
+        .control-box-header {
+            background-color: #DBD5F1;
+            color: #5C369F;
+            border-bottom: 1px solid #7D52B7;
+        }
+
+        .medium-box {
+            width: 250px;
+        }
+
+        .line-of-items {
+            display: flex;
+            margin: auto;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .line-of-items .col {
+            width: 70px;
+        }
+
+        .in-the-middle {
+            justify-content: center;
+        }
+
+        .slidecontainer {
+             width: 100%; 
+        }
+
+       
+
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+        <h1>ESP32 Web Socket Test</h1>
+
+        <div class="control-box medium-box">
+            <div class="control-box-header">Whole House</div>
+            <div class="line-of-items">
+                <div  class="col">Status:</div>    
+                <div id="connection-status-label"  class="col"></div>    
+            </div>
+            
+            <div class="line-of-items"><div>Automatic Update</div></div>
+            
+            <div class="line-of-items">
+                <button id="start-update-button" class="in-the-middle">Start</button>
+                <button id="stop-update-button" class="in-the-middle">Stop</button>
+            </div>
+
+            <div class="line-of-items"><div>Transfer Rate</div></div>
+            <div class="line-of-items">            
+                <div class="slidecontainer">
+                    <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+                    <p>Value: <span id="transferspeed"></span></p>
+                </div>
+            </div>
+    
+        </div>
+    </div>
+   
+    <script>
+        
+		const wsUri = "ws://10.0.0.250/ws";
+        var websocket;
+        var activeUpdate = false;
+		
+		const displayConnectionStatus = (state) => {
+			
+			const connectStatus = document.querySelector("#connection-status-label");
+			connectStatus.innerHTML = state;
+		};
+
+        const writeToScreen = (message) => {
+			
+            console.log('Write Message ' + message);
+		};
+
+        
+        function initWebSocket() {
+            websocket = new WebSocket(wsUri);
+                
+            websocket.onopen = function(evt) {
+                console.log('CONNECTED Event');
+		        displayConnectionStatus('Connected');
+            };
+
+            websocket.onmessage  = function(evt) {
+                console.log('onmessage Event');
+		        writeToScreen(`RECEIVED: ${e.data}`);
+            };
+                
+                
+            websocket.onclose = function(evt) {
+                console.log('DISCONNECTED Event');
+    		   displayConnectionStatus('Connected');
+            };
+                
+            websocket.onerror = function(evt) {
+                   console.log('onerror Event');
+		          displayConnectionStatus('Error');
+            };
+        }
+		     
+        const toggleUpdateButtons = (running) => {
+
+            document.getElementById("start-update-button").disabled = running;
+            document.getElementById("stop-update-button").disabled = !running;
+           
+        };
+    
+        const startTransferButtonClickHandler  = () => {
+            console.log("Start transfer Handler");
+            activeUpdate = true;
+
+            websocket.send('Start');
+            toggleUpdateButtons(activeUpdate);
+        };
+
+        const stopTransferButtonClickHandler  = () => {
+            console.log("Stop transfer Handler");
+            activeUpdate = false;
+
+            websocket.send('Stop');
+            toggleUpdateButtons(activeUpdate);
+        };
+  
+         const updateValueHandler  = () => {
+            console.log("Handler of update of value: Request to " + url);
+
+            if (activeUpdate)        setTimeout(updateValueHandler, 300);           
+         };
+
+        
+         const updateTransferRateHandler  = () => {
+            transferspeed.innerHTML = slider.value;
+         };
+
+         
+         function setEventHandlers() {
+
+           const startTransferButton = document.getElementById("start-update-button");
+           startTransferButton.addEventListener("click", startTransferButtonClickHandler );
+
+           const stopTransferButton = document.getElementById("stop-update-button");
+           stopTransferButton.addEventListener("click", stopTransferButtonClickHandler );
+
+           const slider = document.getElementById("myRange");
+           slider.addEventListener("input", updateTransferRateHandler );
+
+	        var transferspeed = document.getElementById("transferspeed");
+            transferspeed.innerHTML = slider.value;
+         }
+          
+         setEventHandlers();
+         console.log('Will try to open the WebSocket on ' + wsUri);
+         initWebSocket();
+
+         toggleUpdateButtons(activeUpdate);
+
+    </script>
+    
+</body>
+</html>
