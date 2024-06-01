@@ -12,7 +12,7 @@
 
         body {
             height: 100%;
-            background-image: linear-gradient(#4D1496, #7D32BF);
+            background-image: linear-gradient(#4D1496, #9567bd);
             background-repeat: no-repeat;
             color: white;
         }
@@ -25,6 +25,8 @@
         .control-box {
             display: flex;
             flex-direction: column;
+
+            background-color: #50169c;
          
             border: 1px solid #7D52B7;
             border-radius: 0px 0px 10px 10px;
@@ -59,6 +61,46 @@
              width: 100%; 
         }
 
+        .control-input {
+            width: 65px;
+            background-color: #7D52B7;
+            color: white;
+        }
+
+        .toggle {
+            position : relative ;
+            display : inline-block;
+            width : 50px;
+            height : 20px;
+            background-color: #DBD5F1;
+            border-radius: 30px;
+            border: 2px solid gray;
+        }
+               
+        .toggle:after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: gray;
+            top: 1px; 
+            left: 1px;
+            transition:  all 0.25s;
+        }
+
+         .checkbox:checked + .toggle::after {
+            left : 25px; 
+        }
+               
+        .checkbox:checked + .toggle {
+            background-color: green;
+        }
+               
+        .checkbox { 
+            display : none;
+        }
+
        
 
     </style>
@@ -69,13 +111,24 @@
         <h1>ESP32 Web Socket Test</h1>
 
         <div class="control-box medium-box">
-            <div class="control-box-header">Whole House</div>
+            <div class="control-box-header">WebSocket Control</div>
             <div class="line-of-items">
                 <div  class="col">Status:</div>    
                 <div id="connection-status-label"  class="col"></div>    
+                <div>
+                    <input type="checkbox" id="switch" class="checkbox" />
+                    <label for="switch" class="toggle">
+                    </label>
+                </div>
             </div>
             
-            <div class="line-of-items"><div>Automatic Update</div></div>
+            <div class="line-of-items"><div>Async Transfer</div></div>
+            <div class="line-of-items">
+                <div  class="col">Size:</div>    
+                <input type="text" class="control-input" id="payload-size-input" >
+        
+
+            </div>
             
             <div class="line-of-items">
                 <button id="start-update-button" class="in-the-middle">Start</button>
@@ -121,7 +174,7 @@
 
             websocket.onmessage  = function(evt) {
                 console.log('onmessage Event');
-		        writeToScreen(`RECEIVED: ${e.data}`);
+		       
             };
                 
                 
@@ -147,7 +200,20 @@
             console.log("Start transfer Handler");
             activeUpdate = true;
 
-            websocket.send('Start');
+
+            const payloadSizeInput = document.getElementById("payload-size-input");
+            const size = payloadSizeInput.value;
+            
+           
+           console.log("Value of payload size is " + size);
+            
+
+           if (size > 0)
+                websocket.send('start:' + size);
+           else
+                websocket.send('start:1');
+
+            
             toggleUpdateButtons(activeUpdate);
         };
 
@@ -155,7 +221,7 @@
             console.log("Stop transfer Handler");
             activeUpdate = false;
 
-            websocket.send('Stop');
+            websocket.send('stop');
             toggleUpdateButtons(activeUpdate);
         };
   
@@ -184,6 +250,11 @@
 
 	        var transferspeed = document.getElementById("transferspeed");
             transferspeed.innerHTML = slider.value;
+
+
+            document.getElementById("payload-size-input").value = 100;
+
+
          }
           
          setEventHandlers();

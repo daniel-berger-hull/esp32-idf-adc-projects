@@ -1,4 +1,42 @@
 
+May 31
+======
+
+  
+  Modified the ESP32 access the size of the wanted payload
+  Add an input control on the HTML, and passing the size of the wanted payload to ESP32
+
+  
+  Note: 
+    The time to send async payload of around 50K is 200-300 mSec. Which is not bad...
+    Larger payload, like 150K will make the ESP32 crash
+
+ To To:
+  complete the Toggle Control:
+    Check here for detailshttps://www.geeksforgeeks.org/how-to-create-toggle-switch-by-using-html-and-css/
+  Add a way to close/open the websocket with the Toggle Control
+
+May 30
+======
+
+  Finally got a real asyn server push. 
+  Binary data is sent back to the html and it still works..
+  Been able to send up to 100 bytes to the client, and it is very fast!
+
+
+To Do:
+  * HTML to be to:
+      - ask for the size of the payload to be returned by the ESP32
+      - ask how many frame to be returned by ESP32 
+        (been able to send 3 frames back to back in the ws_flex_async_send and worked ok)
+      - Connect and Disconnect the web socket (add a switch on the HTML)
+ * Test the bandwidth we can reach in the server push (how big, how fast, etc)
+
+  * echo_handler method should not try to create a  httpd_ws_frame_t object 
+    (it is done now somewhere else)
+
+
+
 May 28 
 ================
 
