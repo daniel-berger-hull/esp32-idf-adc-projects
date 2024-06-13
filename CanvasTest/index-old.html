@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Socket Client Page</title>
+
+
+    <style>
+        body {
+            background-color: #1E3644;
+            color: white;
+        }
+
+
+        .centered {
+            text-align: center;
+        }
+
+        .wrapper {
+            margin: auto;
+            width: 80%;
+
+            display: flex; 
+            flex-direction: column;
+            row-gap: 10px;
+
+            background-color: #1991C2;
+
+            padding-bottom: 10px;
+
+
+            border-radius: 10px;
+        }
+
+        .control-section {
+            display: flex; /* or inline-flex */
+            flex-direction: column;
+            justify-content: space-evenly;
+            margin: auto;
+            width: 400px;
+            height: 150px;
+            background-color: white;
+            color:  #1E3644;
+            border-radius: 10px;
+        }
+
+        .warning-section {
+            width: 300px;
+            height: 100px;
+            margin: auto;
+            margin-top: 10px;  
+            background-color: #FDFF00;
+            
+            color:  #1E3644;
+            border-radius: 10px;
+        }
+
+        .line-section {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .canvas-section {
+
+            width: 350px;
+            height: 200px;
+            margin:  auto;
+           
+
+        }
+
+        #graph-canvas {
+            background-color: #d2d2d2;
+            border:1px solid #c3c3c3;
+        }
+    </style>
+
+
+</head>
+<body>
+
+   
+   
+        <div class="wrapper">
+            <h1 class="centered">Web Socket test</h1>
+        
+
+
+            <div class="control-section">
+                <div class="line-section centered">
+                    <div>
+                        <span>Connection Status</span>
+                        <span id="connection-status" ></span>
+                    </div>
+                </div>
+                
+                <div class="centered">
+                    <span>Send to Server</span>
+                    <input type="text" id="messageInput">
+                    <button id="send-to-server" onclick="sendMessage()">Send</button>
+                </div>
+                
+                <div class="centered">
+                    <button id="start-transfer" onclick="startTransfer()">Start</button>
+                    <button id="stop-transfer" onclick="stopTransfer()">Stop</button>
+                </div>
+            </div>
+
+         
+           <div class="canvas-section">
+                <canvas id="graph-canvas" width="350" height="150" >
+                     Your browser does not support the canvas element.
+                 </canvas>
+           </div>
+         
+           <div class="centered">
+                <button id="Test-button" onclick="testingDrawing()">Test!</button>
+           </div>
+           
+           
+           
+          
+
+            <div class="warning-section">
+                <div>Messages Received</div>
+                <div id="output"></div>
+            </div>
+
+
+            
+        </div>
+
+      
+
+
+<script>
+
+    const GRAPH_WIDTH   = 350;
+    const GRAPH_HEIGHT  = 150;
+
+    const GRAPH_BORDER_MARGIN        = 5;
+
+    const GRAPH_Y_AXIS_OFFSET    = (4*GRAPH_HEIGHT)/5 + GRAPH_BORDER_MARGIN;
+    const GRAPH_X_AXIS_START_POS     = GRAPH_BORDER_MARGIN; 
+    const GRAPH_X_AXIS_END_POS       = GRAPH_WIDTH  - GRAPH_BORDER_MARGIN;
+    const GRAPH_Y_AXIS_START_POS     = GRAPH_BORDER_MARGIN; 
+    const GRAPH_Y_AXIS_END_POS       = GRAPH_HEIGHT  - GRAPH_BORDER_MARGIN;
+
+    const DRAWABLE_WIDTH = GRAPH_X_AXIS_END_POS - GRAPH_X_AXIS_START_POS;
+    const DRAWABLE_HEIGHT = GRAPH_Y_AXIS_OFFSET - GRAPH_BORDER_MARGIN;
+
+
+
+
+    var websocket;
+    let dataPoints = [];
+    var canvas = document.getElementById("graph-canvas");
+    var ctx = canvas.getContext("2d");
+    var transferActive = false;
+
+    var drawSolution = {
+        revalidated: false, 
+        nbrBars: 0,
+        barsWidth: 0,
+        barsMaxHeigt: 0,
+        barsValueToHeightRatio: 0
+    }
+     
+    function initWebSocket() {
+            console.log("Stargting the web socket on port 8080");
+            websocket = new WebSocket('ws://localhost:8080');
+            websocket.onopen = onOpen;
+            websocket.onclose = onClose;
+            websocket.onmessage = onMessage; // <-- add this line
+        }
+
+    function onOpen(event) {
+        // Alert the user that they are 
+        // connected to the WebSocket server
+
+        const connectStatusLabel = document.getElementById('connection-status');
+        connectStatusLabel.innerHTML = `<b>Connected</b>`;
+        connectStatusLabel.style.color = `green`;
+              
+        console.log('You are Connected to WebSocket Server');
+
+    };
+
+
+    function isValueMessage(message) {
+
+        return message.charAt(0) == 'd';
+    }
+    // Event listener for when a message
+    //  is received from the server
+    function onMessage(event) {
+
+        const message = event.data;
+
+        const outputDiv = document.getElementById('output');
+//        outputDiv.innerHTML = `<p>Received <b>"${event.data}"</b> from server.</p>`;
+        outputDiv.innerHTML = `<p>Received <b>"${message}"</b> from server.</p>`;
+        //console.log(message);
+
+
+
+
+        if (!isValueMessage(message))
+        {
+            console.log(message + " is not a valid data message!");
+            return;
+        }
+     
+
+        let seperator = message.indexOf(":");
+        if (seperator == -1)  return;
+
+        
+        const timestampPart = message.substring(1,seperator);
+        const valuePart = message.substring(seperator+1, message.length);
+
+        //console.log(`Time is ${timestampPart}, value is ${valuePart}`);
+
+        const time = Number.parseInt(timestampPart);
+        const value = Number.parseInt(valuePart);
+        
+        
+        
+        //const converted = Number.parseInt(event.data);
+        
+//        if (!isNaN(converted))
+        if (!isNaN(time) && !isNaN(time)){
+
+//            dataPoints.push(event.data);
+            dataPoints.push( {"time":time, "value": value}  );
+
+        }
+
+            
+
+        if (dataPoints.length >= 10)  dataPoints.shift();
+        
+    };
+
+    // Event listener for when the 
+    // WebSocket connection is closed
+    function onClose(event) {
+
+        const connectStatusLabel = document.getElementById('connection-status');
+
+        connectStatusLabel.innerHTML = `<b>Disconnected</b>`;
+        connectStatusLabel.style.color = `red`;
+
+        console.log('Disconnected from WebSocket server');
+    };
+
+    function sendMessage() {
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value;
+        websocket.send(message);
+        messageInput.value = '';
+    }
+
+    function startTransfer() {
+        console.log('Handling startTransfer');
+        websocket.send('start');
+
+        transferActive = true;
+        setTimeout(testingDrawing, 250);
+
+    }
+
+    function stopTransfer() {
+        console.log('Handling stopTransfer');
+        websocket.send('stop');
+
+        transferActive = false;
+    }
+
+
+   
+
+
+    function loadData(){
+
+        dataPoints.length = 0;
+        for (let i = 0; i < 10; i++) {
+            dataPoints.push(Math.random()*200);
+        }
+
+    }
+
+    function calculateDrawing() {
+        
+
+
+        console.log(dataPoints.length + " points to draw");
+        drawSolution.nbrBars = dataPoints.length;
+        //drawSolution.barsWidth = DRAWABLE_WIDTH / dataPoints.length;
+        drawSolution.barsWidth = DRAWABLE_WIDTH / 10;
+        
+
+        let maxValue = Math.max(...dataPoints);
+
+        drawSolution.barsMaxHeigt = DRAWABLE_HEIGHT;
+        drawSolution.barsValueToHeightRatio = DRAWABLE_HEIGHT / maxValue;
+
+        drawSolution.revalidated = true;
+    
+    }
+
+    function clearCanvas(ctx){
+
+        ctx.fillStyle = "#d2d2d2";
+        ctx.fillRect(0, 0,  GRAPH_WIDTH, GRAPH_HEIGHT);
+    }
+
+    function drawAxis(ctx){
+
+        ctx.beginPath();
+        ctx.moveTo(GRAPH_X_AXIS_START_POS, GRAPH_Y_AXIS_OFFSET+2);
+        ctx.lineTo(GRAPH_X_AXIS_END_POS, GRAPH_Y_AXIS_OFFSET+2);
+
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#00ff00';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(GRAPH_X_AXIS_START_POS-2, GRAPH_Y_AXIS_START_POS);
+        ctx.lineTo(GRAPH_X_AXIS_START_POS-2, GRAPH_Y_AXIS_END_POS);
+        ctx.strokeStyle = '#00ff00';
+        ctx.stroke();
+    }
+
+
+   
+    function drawData(ctx){
+
+        if (!drawSolution.revalidated) {
+            calculateDrawing();
+            console.log("The values needs to be re calculated");
+        }
+
+      let xBar = GRAPH_X_AXIS_START_POS;
+      let barWidth = drawSolution.barsWidth;
+
+      
+      for (let i = 0; i < drawSolution.nbrBars; i++) {
+    
+            ctx.beginPath();
+            ctx.lineWidth = "1";
+            ctx.strokeStyle = "#1E3644";
+            ctx.fillStyle = "#1991C2";
+
+            const barHeight = dataPoints[i] * drawSolution.barsValueToHeightRatio;
+            const yStart = GRAPH_Y_AXIS_OFFSET  - barHeight;
+
+            ctx.fillRect(xBar, yStart,  drawSolution.barsWidth, barHeight);
+            ctx.rect(xBar, yStart,  drawSolution.barsWidth,  barHeight);
+                    
+            ctx.stroke();
+
+            xBar += drawSolution.barsWidth;
+        }
+
+        drawSolution.revalidated = false;
+    }
+
+
+    function redrawCanvas(ctx){
+        calculateDrawing();
+        clearCanvas(ctx);
+        drawAxis(ctx);
+        drawData(ctx);
+    }
+
+
+    function testingDrawing() {
+        
+        redrawCanvas(ctx);
+
+        if (transferActive)    setTimeout(testingDrawing, 250);
+    }
+
+    function onLoad(event) {
+        console.log("Load Event");
+
+        initWebSocket();
+        redrawCanvas(ctx);      
+    }
+
+    window.addEventListener('load', onLoad);
+    
+
+
+</script>
+</body>
+</html>

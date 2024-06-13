@@ -1,0 +1,119 @@
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    background-image: linear-gradient(#4D1496, #9567bd);
+    background-repeat: no-repeat;
+    color: white;
+}
+
+
+
+.control-box {
+    display: flex;
+    flex-direction: column;
+    background-color: #50169c;
+ 
+    border: 1px solid #7D52B7;
+    border-radius: 0px 0px 10px 10px;
+}
+
+.control-box-header {
+    background-color: #DBD5F1;
+    color: #5C369F;
+    border-bottom: 1px solid #7D52B7;
+    text-align: center;
+}
+
+.medium-box {
+    flex-grow: 1;
+}
+
+.large-box {
+    flex-grow: 2;
+}
+
+
+
+.line-of-items {
+    display: flex;
+    flex-direction: row;
+    margin: auto;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.line-of-items .col {
+    width: 70px;
+}
+
+.in-the-middle {
+    justify-content: center;
+}
+
+.slidecontainer {
+     width: 100%; 
+}
+
+.control-input {
+    width: 65px;
+    background-color: #7D52B7;
+    color: white;
+}
+
+.toggle {
+    position : relative ;
+    display : inline-block;
+    width : 50px;
+    height : 20px;
+    background-color: #DBD5F1;
+    border-radius: 30px;
+    border: 2px solid gray;
+}
+       
+.toggle:after {
+    content: '';
+    position: absolute;
+    width: 25px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: gray;
+    top: 1px; 
+    left: 1px;
+    transition:  all 0.25s;
+}
+
+ .checkbox:checked + .toggle::after {
+    left : 25px; 
+}
+       
+.checkbox:checked + .toggle {
+    background-color: green;
+}
+       
+.checkbox { 
+    display : none;
+}
+
+.canvas-section {
+  
+    height: 200px;
+    margin:  auto;
+}
+
+.medium-canvas {
+    width: 350px;
+}
+
+.large-canvas {
+    width: 550px;
+}
+
+#graph-canvas {
+    margin:  auto;
+    background-color: #7b49af;
+
+    border:1px solid #c3c3c3;
+}

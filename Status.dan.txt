@@ -1,4 +1,68 @@
 
+Future:
+Draw the signal on the Canva? (instead of the packet received)
+
+*Collect the time  and size of the frame received messages
+ (To diplay them later at the right place on the canvas)
+
+ 
+
+June 12
+=======
+
+* Drawing correct axis label on frame canvas
+* Added a clear button on frame canvas
+
+
+
+June 7
+======
+
+  Extracted the css and javascript into their own .css and .js file, and are served to client by the ESP32
+  Added another Canvas, that will be used to draw the signal received by the ESP32 and sent to the client page
+
+  To Do:
+    Write the numbers in the axis for the frame received
+    Add methods to draw for the signal canvas
+
+June 6
+======
+
+   Added a second index2.html (Which is a backup of work prior to today)
+   Added a Canvas to the HTML page, and it can draw the axis (no data yet)
+
+June 3
+======
+
+
+   Activated the switch button --> The connection close and open with the switch
+   Note: The connection is closed, but nothing appears to be send to the ESP32...
+
+   To: 
+     Analysis the close socket on the ESP32 side...
+     create a second index.html, but with the canvas ...
+
+ 
+June 1
+======
+
+
+  Added frame number to be sent in the HTML, with validation (has to be from 1 to 10 frames)
+  Modifed ESP32 to accept the number of frame to be returned
+  Added a validation the payload size in the HTML 
+
+  Note: Tried to split the User command into its own .c file, but the linker failed to find the methods
+
+  To Do:
+
+  Activate the switch button --> Close the Web Socket
+  Start to record the time where the frames are received
+  Try to have multiple source file (fix the linker probleme)
+
+  To Do 2:
+  Add the Canvas into the page
+
+
 May 31
 ======
 

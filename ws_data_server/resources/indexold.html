@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Web Socket</title>
+
+    <style>
+        html {
+            height: 100%;
+        }
+
+        body {
+            height: 100%;
+            background-image: linear-gradient(#4D1496, #9567bd);
+            background-repeat: no-repeat;
+            color: white;
+        }
+
+        .wrapper {
+            width: 70%;
+            margin: auto;
+        }
+
+
+        
+
+        .control-box {
+            display: flex;
+            flex-direction: column;
+            background-color: #50169c;
+         
+            border: 1px solid #7D52B7;
+            border-radius: 0px 0px 10px 10px;
+        }
+
+        .control-box-header {
+            background-color: #DBD5F1;
+            color: #5C369F;
+            border-bottom: 1px solid #7D52B7;
+            text-align: center;
+        }
+
+        .medium-box {
+            flex-grow: 1;
+        }
+
+        .large-box {
+            flex-grow: 2;
+        }
+
+
+
+        .line-of-items {
+            display: flex;
+            flex-direction: row;
+            margin: auto;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .line-of-items .col {
+            width: 70px;
+        }
+
+        .in-the-middle {
+            justify-content: center;
+        }
+
+        .slidecontainer {
+             width: 100%; 
+        }
+
+        .control-input {
+            width: 65px;
+            background-color: #7D52B7;
+            color: white;
+        }
+
+        .toggle {
+            position : relative ;
+            display : inline-block;
+            width : 50px;
+            height : 20px;
+            background-color: #DBD5F1;
+            border-radius: 30px;
+            border: 2px solid gray;
+        }
+               
+        .toggle:after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: gray;
+            top: 1px; 
+            left: 1px;
+            transition:  all 0.25s;
+        }
+
+         .checkbox:checked + .toggle::after {
+            left : 25px; 
+        }
+               
+        .checkbox:checked + .toggle {
+            background-color: green;
+        }
+               
+        .checkbox { 
+            display : none;
+        }
+
+        .canvas-section {
+            width: 350px;
+            height: 200px;
+            margin:  auto;
+        }
+
+        #graph-canvas {
+            background-color: #d2d2d2;
+            border:1px solid #c3c3c3;
+        }
+
+       
+
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+        <h1>ESP32 Web Socket Test</h1>
+
+        <div class="line-of-items">    
+            <div class="control-box medium-box">
+                <div class="control-box-header">Transfer Control</div>
+                <div class="line-of-items">
+                    <div  class="col">Status:</div>    
+                    <div id="connection-status-label"  class="col"></div>    
+                    <div>
+                        <input type="checkbox" id="switch" class="checkbox"  />
+                        <label for="switch" class="toggle">
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="line-of-items"><div>Async Transfer</div></div>
+                <div class="line-of-items">
+                    <div  class="col">Size:</div>    
+                    <input type="text" class="control-input" id="payload-size-input" >
+                </div>
+                <div class="line-of-items">
+                    <div  class="col">Count:</div>    
+                    <input type="text" class="control-input" id="frame-count-input" >
+                </div>
+                
+                <div class="line-of-items">
+                    <button id="start-update-button" class="in-the-middle">Start</button>
+                    <button id="stop-update-button" class="in-the-middle">Stop</button>
+                </div>
+
+                <div class="line-of-items"><div>Transfer Rate</div></div>
+                <div class="line-of-items">            
+                    <div class="slidecontainer">
+                        <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+                        <p>Value: <span id="transferspeed"></span></p>
+                    </div>
+                </div>
+        
+            </div>
+
+            <div class="control-box medium-box">
+                <div class="control-box-header">Frame Dispaly Control</div>
+                    <div class="line-of-items"><div>Async Transfer</div></div>
+
+                    <div class="canvas-section">
+                        <canvas id="graph-canvas" width="350" height="150" >
+                             Your browser does not support the canvas element.
+                         </canvas>
+                   </div>
+
+
+
+                   <div><button  id="test-button">Testing!</button></div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="control-box medium-box">
+            <div class="control-box-header">Frame Dispaly Control</div>
+                <div class="line-of-items"><div>Async Transfer2</div></div>
+
+                <div class="canvas-section">
+                    <canvas id="graph-canvas" width="350" height="150" >
+                         Your browser does not support the canvas element.
+                     </canvas>
+               </div>
+
+
+
+               <div><button  id="test-button">Testing!</button></div>
+                
+            </div>
+        </div>
+    </div>
+   
+    <script>
+
+        const MAX_PAYLOAD_SIZE = 100000;
+        const MAX_FRAME_COUNT  = 10;
+        
+        const GRAPH_WIDTH   = 350;
+        const GRAPH_HEIGHT  = 150;
+
+        const GRAPH_BORDER_MARGIN        = 5;
+
+        const GRAPH_Y_AXIS_OFFSET    = (4*GRAPH_HEIGHT)/5 + GRAPH_BORDER_MARGIN;
+        const GRAPH_X_AXIS_START_POS     = GRAPH_BORDER_MARGIN; 
+        const GRAPH_X_AXIS_END_POS       = GRAPH_WIDTH  - GRAPH_BORDER_MARGIN;
+        const GRAPH_Y_AXIS_START_POS     = GRAPH_BORDER_MARGIN; 
+        const GRAPH_Y_AXIS_END_POS       = GRAPH_HEIGHT  - GRAPH_BORDER_MARGIN;
+
+        const DRAWABLE_WIDTH = GRAPH_X_AXIS_END_POS - GRAPH_X_AXIS_START_POS;
+        const DRAWABLE_HEIGHT = GRAPH_Y_AXIS_OFFSET - GRAPH_BORDER_MARGIN;
+
+
+
+
+        
+		const wsUri = "ws://10.0.0.250/ws";
+        var websocket;
+        var activeUpdate = false;
+
+        let dataPoints = [];
+        var canvas = document.getElementById("graph-canvas");
+        var ctx = canvas.getContext("2d");
+        var transferActive = false;
+
+        var drawSolution = {
+            revalidated: false, 
+            nbrBars: 0,
+            barsWidth: 0,
+            barsMaxHeigt: 0,
+            barsValueToHeightRatio: 0
+        };
+            
+		const displayConnectionStatus = (state) => {
+			
+			const connectStatus = document.querySelector("#connection-status-label");
+			connectStatus.innerHTML = state;
+		};
+
+        const writeToScreen = (message) => {
+			
+            console.log('Write Message ' + message);
+		};
+
+        
+        function initWebSocket() {
+            websocket = new WebSocket(wsUri);
+                
+            websocket.onopen = function(evt) {
+                console.log('CONNECTED Event');
+		        displayConnectionStatus('Connected');
+            };
+
+            websocket.onmessage  = function(evt) {
+                console.log('onmessage Event');
+		       
+            };
+                
+                
+            websocket.onclose = function(evt) {
+                console.log('DISCONNECTED Event');
+    		   displayConnectionStatus('Connected');
+            };
+                
+            websocket.onerror = function(evt) {
+                   console.log('onerror Event');
+		          displayConnectionStatus('Error');
+            };
+        }
+		     
+        const toggleUpdateButtons = (running) => {
+
+            document.getElementById("start-update-button").disabled = running;
+            document.getElementById("stop-update-button").disabled = !running;
+           
+        };
+    
+        const startTransferButtonClickHandler  = () => {
+            console.log("Start transfer Handler");
+            activeUpdate = true;
+
+
+            const size = document.getElementById("payload-size-input").value;
+            const frameCount = document.getElementById("frame-count-input").value;
+            
+           
+           console.log("Value of payload size is " + size);
+           console.log("Value of frame count is " + frameCount);
+            
+
+           if (size <= 0 || size > MAX_PAYLOAD_SIZE) {
+                alert('Enter a greater than 0 and less that 100K size of the payload to be returned');
+                return;
+           }
+
+           if (frameCount <= 0 || frameCount > MAX_FRAME_COUNT) {
+                alert('Enter a greater than 0 and less that 10 for the number of frames to be returned');
+                return;
+           }
+
+
+
+           websocket.send('start:' + size + ":" + frameCount);
+           toggleUpdateButtons(activeUpdate);
+   
+            
+        };
+
+        const stopTransferButtonClickHandler  = () => {
+            console.log("Stop transfer Handler");
+            activeUpdate = false;
+
+            websocket.send('stop');
+            toggleUpdateButtons(activeUpdate);
+        };
+  
+         const updateValueHandler  = () => {
+            console.log("Handler of update of value: Request to " + url);
+
+            if (activeUpdate)        setTimeout(updateValueHandler, 300);           
+         };
+
+        
+         const updateTransferRateHandler  = () => {
+            transferspeed.innerHTML = slider.value;
+         };
+
+         const connectionSwitchHandler  = (event) => {
+
+            const connectSwitch = document.getElementById("switch");
+            console.log('connectionSwitchHandler');
+
+            if (event.currentTarget.checked) {
+                console.log('checked');
+                initWebSocket();
+            } else {
+                console.log('not checked');
+                websocket.close(1000,"Work Completed");
+            }
+         };
+
+
+
+
+         function loadData(){
+
+            dataPoints.length = 0;
+            for (let i = 0; i < 10; i++) {
+                dataPoints.push(Math.random()*200);
+            }
+        }
+
+        function calculateDrawing() {
+        
+            console.log(dataPoints.length + " points to draw");
+            drawSolution.nbrBars = dataPoints.length;
+            drawSolution.barsWidth = DRAWABLE_WIDTH / 10;
+            
+            let maxValue = Math.max(...dataPoints);
+
+            drawSolution.barsMaxHeigt = DRAWABLE_HEIGHT;
+            drawSolution.barsValueToHeightRatio = DRAWABLE_HEIGHT / maxValue;
+
+            drawSolution.revalidated = true;
+        }
+
+        function clearCanvas(ctx){
+
+            ctx.fillStyle = "#d2d2d2";
+            ctx.fillRect(0, 0,  GRAPH_WIDTH, GRAPH_HEIGHT);
+        }
+
+        function drawAxis(ctx){
+
+            ctx.beginPath();
+            ctx.moveTo(GRAPH_X_AXIS_START_POS, GRAPH_Y_AXIS_OFFSET+2);
+            ctx.lineTo(GRAPH_X_AXIS_END_POS, GRAPH_Y_AXIS_OFFSET+2);
+
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#00ff00';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(GRAPH_X_AXIS_START_POS-2, GRAPH_Y_AXIS_START_POS);
+            ctx.lineTo(GRAPH_X_AXIS_START_POS-2, GRAPH_Y_AXIS_END_POS);
+            ctx.strokeStyle = '#00ff00';
+            ctx.stroke();
+        }
+
+
+   
+        function drawData(ctx){
+
+            if (!drawSolution.revalidated) {
+                calculateDrawing();
+                console.log("The values needs to be re calculated");
+            }
+
+        let xBar = GRAPH_X_AXIS_START_POS;
+        let barWidth = drawSolution.barsWidth;
+
+        
+        for (let i = 0; i < drawSolution.nbrBars; i++) {
+        
+                ctx.beginPath();
+                ctx.lineWidth = "1";
+                ctx.strokeStyle = "#1E3644";
+                ctx.fillStyle = "#1991C2";
+
+                const barHeight = dataPoints[i] * drawSolution.barsValueToHeightRatio;
+                const yStart = GRAPH_Y_AXIS_OFFSET  - barHeight;
+
+                ctx.fillRect(xBar, yStart,  drawSolution.barsWidth, barHeight);
+                ctx.rect(xBar, yStart,  drawSolution.barsWidth,  barHeight);
+                        
+                ctx.stroke();
+
+                xBar += drawSolution.barsWidth;
+            }
+
+            drawSolution.revalidated = false;
+        }
+
+
+        function redrawCanvas(ctx){
+            calculateDrawing();
+            clearCanvas(ctx);
+            drawAxis(ctx);
+            drawData(ctx);
+        }
+
+
+    function testingDrawing() {
+        
+
+        console.log("testingDrawing");
+        redrawCanvas(ctx);
+
+        if (transferActive)    setTimeout(testingDrawing, 250);
+    }
+
+         
+
+         
+         function setEventHandlers() {
+
+           const startTransferButton = document.getElementById("start-update-button");
+           startTransferButton.addEventListener("click", startTransferButtonClickHandler );
+
+           const stopTransferButton = document.getElementById("stop-update-button");
+           stopTransferButton.addEventListener("click", stopTransferButtonClickHandler );
+
+           const slider = document.getElementById("myRange");
+           slider.addEventListener("input", updateTransferRateHandler );
+
+	        var transferspeed = document.getElementById("transferspeed");
+            transferspeed.innerHTML = slider.value;
+
+           const connectSwitch = document.getElementById("switch");
+           connectSwitch.addEventListener("change", connectionSwitchHandler );
+           connectSwitch.value = true;
+
+
+           const testButton = document.getElementById("test-button");
+           testButton.addEventListener("click", testingDrawing );
+
+           
+
+          
+            document.getElementById("payload-size-input").value = 100;
+            document.getElementById("frame-count-input").value = 1;
+
+
+
+         }
+          
+         setEventHandlers();
+         toggleUpdateButtons(activeUpdate);
+
+    </script>
+    
+</body>
+</html>
