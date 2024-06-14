@@ -199,6 +199,9 @@ function calculateDrawing() {
         return framesReceived.map(d => d.size);
       }
 
+    function getTimes(){
+        return framesReceived.map(d => d.time);
+    }
 
     console.log(framesReceived.length + " frames to draw");
     console.log(dataPoints.length + " points to draw");
@@ -208,8 +211,14 @@ function calculateDrawing() {
     
 
     let maxValue = Math.max(...getSizes());
+    let startTime = Math.min(...getTimes());
+    let endTime = Math.max(...getTimes());
+    
+    drawSolution.timeRange = endTime - startTime;
 
     console.log(`The max value is ${maxValue}`);
+
+    framesReceived.forEach( (element) => {element.time = element.time - startTime; });
     
     drawSolution.barsMaxHeigt = DRAWABLE_HEIGHT;
     drawSolution.barsValueToHeightRatio = DRAWABLE_HEIGHT / maxValue;
@@ -275,6 +284,9 @@ function drawData(ctx){
     }
 
 
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "white";
+
     drawSolution.barsValueToHeightRatio = 1;
 
    
@@ -283,8 +295,16 @@ function drawData(ctx){
     
     let barWidth = drawSolution.barsWidth;
 
+    const graphWidth = GRAPH_X_AXIS_END_POS - GRAPH_X_AXIS_START_POS;
+
+ 
   
-for (let i = 0; i < drawSolution.nbrBars; i++) {
+
+    console.log(`${framesReceived.length} frames to draw...`);
+
+    let prevX = GRAPH_X_AXIS_START_POS;
+    let overlapCount = 1;
+    for (let i = 0; i < framesReceived.length; i++) {
 
         ctx.beginPath();
         ctx.lineWidth = "1";
@@ -293,6 +313,14 @@ for (let i = 0; i < drawSolution.nbrBars; i++) {
 
         const barHeight = framesReceived[i].size * drawSolution.barsValueToHeightRatio;
         const yStart = GRAPH_Y_AXIS_OFFSET  - barHeight;
+
+        const xRatio = framesReceived[i].time / (drawSolution.timeRange+100);
+        xBar = GRAPH_X_AXIS_START_POS + (xRatio * graphWidth);
+
+        console.log(`time = ${framesReceived[i].time} ratio = ${xRatio} x = ${xBar}  Height: ${barHeight}`);
+
+        
+
 
         var grd = ctx.createLinearGradient(0, 0, 0, barHeight/2);
         grd.addColorStop(0, "#b068ff");
@@ -305,7 +333,20 @@ for (let i = 0; i < drawSolution.nbrBars; i++) {
                 
         ctx.stroke();
 
-        xBar += drawSolution.barsWidth + GRAPH_X_SPACER;
+        if ((xBar-prevX) < 5){
+
+            overlapCount++;
+            console.log("Bat overlap " + overlapCount);
+            ctx.fillStyle = "white";
+            ctx.fillText(overlapCount,xBar + (drawSolution.barsWidth/2),yStart + barHeight/2);
+
+        } else {
+            overlapCount = 1;
+        }
+
+       
+        prevX = xBar;
+
 
     }
 
@@ -396,5 +437,4 @@ function clearSignalCanvasHandler() {
   
  setEventHandlers();
  toggleUpdateButtons(activeUpdate);
- loadData();
  redrawCanvas(ctx);

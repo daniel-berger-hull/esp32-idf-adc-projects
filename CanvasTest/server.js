@@ -9,7 +9,6 @@ console.log('Server , open on port 8080...');
 
 
 
-
 const connectionHandler = (ws) => {
 
     console.log('Client connected');
@@ -21,16 +20,27 @@ const connectionHandler = (ws) => {
         return;
       } 
 
-  
 	  messageCount++;
 	  console.log("Tick " + messageCount);
 
-	  if (messageCount <= 25) {
+      const buffer = new ArrayBuffer(8);
+      for (let i=0;i<8;i++) buffer[i] = i;
+
+	  if (messageCount <= 8) {
+
+        
+        
 
         var message = "d" + Date.now() + ":" + Math.floor(Math.random() * 100);
-         ws.send(`${message}`);   // For single client, use this one..
+//         ws.send(`${message}`);   // For single client, use this one..
+         ws.send(buffer);   // For single client, use this one..
 
-	  	  setTimeout(transferHandler, 100);
+         
+
+         const delay = Math.floor(Math.random() * 70) + 10;
+         console.log(`Delay will be ${delay}`);
+
+	  	  setTimeout(transferHandler, delay);
     } else {
         transferActive = false;
         messageCount = 0;
@@ -47,7 +57,12 @@ const connectionHandler = (ws) => {
 
     ws.on('message', function incoming(message) {
 
-        if (message == 'start') {
+//        if (message == 'start') {
+
+        const msgString = message.toString();
+
+        if (msgString.startsWith('start')) {
+
             console.log('Start Transfer Request received...');
             transferActive = true;
             const myTimer = setTimeout(transferHandler, 100);
