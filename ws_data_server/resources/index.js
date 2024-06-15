@@ -4,7 +4,7 @@ const MAX_FRAME_COUNT  = 10;
 const GRAPH_WIDTH   = 350;
 const GRAPH_HEIGHT  = 200;
 
-const GRAPH_BORDER_MARGIN        = 20;
+const GRAPH_BORDER_MARGIN        = 35;
 
 const GRAPH_Y_AXIS_OFFSET    = (4*GRAPH_HEIGHT)/5 + GRAPH_BORDER_MARGIN;
 const GRAPH_X_AXIS_START_POS     = GRAPH_BORDER_MARGIN; 
@@ -18,6 +18,8 @@ const GRAPH_X_SPACER             = 10;
 const DRAWABLE_WIDTH = GRAPH_X_AXIS_END_POS - GRAPH_X_AXIS_START_POS;
 const DRAWABLE_HEIGHT = GRAPH_Y_AXIS_OFFSET - GRAPH_BORDER_MARGIN;
 
+const BUTTON_DISABLED = false;
+const BUTTON_ENABLED  = true;
 
 
 
@@ -31,13 +33,15 @@ var canvas = document.getElementById("graph-canvas");
 var ctx = canvas.getContext("2d");
 var transferActive = false;
 
+var frameCount = 0;
 var framesReceived = [];
 
 var drawSolution = {
     revalidated: false, 
     nbrBars: 0,
+    maxSizeValue: 0,
     barsWidth: 0,
-    barsMaxHeigt: 0,
+    barsMaxHeigth: 0,
     barsValueToHeightRatio: 0
 };
     
@@ -53,6 +57,10 @@ const writeToScreen = (message) => {
 };
 
 
+function isFrameCountReached(currentFrames, frameCountTarget) {
+     return currentFrames == frameCountTarget;
+}
+
 function initWebSocket() {
     websocket = new WebSocket(wsUri);
     
@@ -61,20 +69,28 @@ function initWebSocket() {
     websocket.onopen = function(evt) {
         console.log('CONNECTED Event');
         displayConnectionStatus('Connected');
+        frameCount = 0;
     };
 
     websocket.onmessage  = function(evt) {
-
-        const now = Date.now(); 
+        
+        const now = Math.floor(performance.now() * 10);
         console.log('onmessage Event: ' + now);
 
         if (evt.data instanceof ArrayBuffer) {
             const dataArray = evt.data;
-            console.log("ArrayBuffer received: lenght is " + dataArray.byteLength);
 
             framesReceived.push({"time":now , "size":dataArray.byteLength});
+            console.log("ArrayBuffer received: lenght is " + dataArray.byteLength + "  framesReceived is "+ framesReceived.length);
 
 
+            if (isFrameCountReached(framesReceived.length,frameCount)) {
+                console.log("Readed!");
+                setStateUpdateButtons(BUTTON_ENABLED,BUTTON_DISABLED);
+                redrawCanvas(ctx);
+            }
+
+    
         } else
           console.log("No info on the type of data received!");
 
@@ -95,7 +111,15 @@ function initWebSocket() {
           displayConnectionStatus('Error');
     };
 }
-     
+
+const setStateUpdateButtons = (startButton,StopButton) => {
+
+    document.getElementById("start-update-button").disabled = !startButton;;
+    document.getElementById("stop-update-button").disabled = !StopButton;
+   
+};
+
+
 const toggleUpdateButtons = (running) => {
 
     document.getElementById("start-update-button").disabled = running;
@@ -106,10 +130,11 @@ const toggleUpdateButtons = (running) => {
 const startTransferButtonClickHandler  = () => {
     console.log("Start transfer Handler");
     activeUpdate = true;
-
+    frameCount = 0;
+    framesReceived.length = 0;
 
     const size = document.getElementById("payload-size-input").value;
-    const frameCount = document.getElementById("frame-count-input").value;
+    frameCount = document.getElementById("frame-count-input").value;
     
    
    console.log("Value of payload size is " + size);
@@ -126,12 +151,8 @@ const startTransferButtonClickHandler  = () => {
         return;
    }
 
-
-
    websocket.send('start:' + size + ":" + frameCount);
-   toggleUpdateButtons(activeUpdate);
-
-    
+   toggleUpdateButtons(activeUpdate);    
 };
 
 const stopTransferButtonClickHandler  = () => {
@@ -149,9 +170,6 @@ const stopTransferButtonClickHandler  = () => {
  };
 
 
- const updateTransferRateHandler  = () => {
-    transferspeed.innerHTML = slider.value;
- };
 
  const connectionSwitchHandler  = (event) => {
 
@@ -161,37 +179,17 @@ const stopTransferButtonClickHandler  = () => {
     if (event.currentTarget.checked) {
         console.log('checked');
         initWebSocket();
+        setStateUpdateButtons(BUTTON_ENABLED,BUTTON_DISABLED);
+     
     } else {
         console.log('not checked');
         websocket.close(1000,"Work Completed");
+        setStateUpdateButtons(BUTTON_DISABLED,BUTTON_DISABLED);
     }
  };
 
 
 
-
- function loadData(){
-
-
-    console.log("loadData");
-    let currentTime = 1718235049350;
-
-    dataPoints.length = 0;
-    for (let i = 0; i < 10; i++) {
-        dataPoints.push(Math.random()*200);
-    }
-
-    for (let i = 0; i < 7; i++) {
-        const size = Math.floor(Math.random()*100) + 25;
-        framesReceived.push({"time":currentTime , "size": size });
-        currentTime += 100;
-    }
-
-    for (let i = 0; i < 7; i++) {
-        console.log(`${i} time: ${framesReceived[i].time}  size: ${framesReceived[i].size}`);
-    }
-
-}
 
 function calculateDrawing() {
 
@@ -220,7 +218,8 @@ function calculateDrawing() {
 
     framesReceived.forEach( (element) => {element.time = element.time - startTime; });
     
-    drawSolution.barsMaxHeigt = DRAWABLE_HEIGHT;
+    drawSolution.maxSizeValue = maxValue;
+    drawSolution.barsMaxHeigth = DRAWABLE_HEIGHT;
     drawSolution.barsValueToHeightRatio = DRAWABLE_HEIGHT / maxValue;
 
     drawSolution.revalidated = true;
@@ -251,16 +250,18 @@ function drawAxis(ctx){
     ctx.font = "14px Arial";
     ctx.fillStyle = "white";
    
-
-    
     let  x = GRAPH_X_AXIS_START_POS - (GRAPH_BORDER_MARGIN/2) - 5;
     const dy = (GRAPH_Y_AXIS_END_POS - GRAPH_Y_AXIS_START_POS) / 4;
     let y = GRAPH_Y_AXIS_START_POS;
 
+    const dyLabel = Math.floor(drawSolution.maxSizeValue  / 4);
+
+    let yLabel = drawSolution.maxSizeValue;
     for (let i=4;i>=0;i--)
     {
-        ctx.fillText(i,x,y);
+        ctx.fillText(yLabel,x,y);
         y += dy;
+        yLabel -= dyLabel;
     }
 
     y = GRAPH_Y_AXIS_OFFSET + (GRAPH_BORDER_MARGIN/2) + 5;
@@ -318,9 +319,6 @@ function drawData(ctx){
         xBar = GRAPH_X_AXIS_START_POS + (xRatio * graphWidth);
 
         console.log(`time = ${framesReceived[i].time} ratio = ${xRatio} x = ${xBar}  Height: ${barHeight}`);
-
-        
-
 
         var grd = ctx.createLinearGradient(0, 0, 0, barHeight/2);
         grd.addColorStop(0, "#b068ff");
@@ -393,22 +391,14 @@ function clearSignalCanvasHandler() {
     console.log("clearSignalCanvasHandler");
 }
 
- 
-
- 
- function setEventHandlers() {
+  
+function setEventHandlers() {
 
    const startTransferButton = document.getElementById("start-update-button");
    startTransferButton.addEventListener("click", startTransferButtonClickHandler );
 
    const stopTransferButton = document.getElementById("stop-update-button");
    stopTransferButton.addEventListener("click", stopTransferButtonClickHandler );
-
-   const slider = document.getElementById("myRange");
-   slider.addEventListener("input", updateTransferRateHandler );
-
-    var transferspeed = document.getElementById("transferspeed");
-    transferspeed.innerHTML = slider.value;
 
    const connectSwitch = document.getElementById("switch");
    connectSwitch.addEventListener("change", connectionSwitchHandler );
@@ -420,8 +410,6 @@ function clearSignalCanvasHandler() {
 
    const clearFrameButton = document.getElementById("clear-frame-canvas-button");
    clearFrameButton.addEventListener("click", clearFrameCanvasHandler );
-
-
 
    const testButton2 = document.getElementById("test2-button");
    testButton2.addEventListener("click", testingDrawing2 );
@@ -436,5 +424,4 @@ function clearSignalCanvasHandler() {
  }
   
  setEventHandlers();
- toggleUpdateButtons(activeUpdate);
  redrawCanvas(ctx);

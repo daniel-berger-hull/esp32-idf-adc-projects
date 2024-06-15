@@ -10,12 +10,20 @@ body {
 }
 
 
+.wrapper {
+    width: 80%;
+    margin: auto;
+}
+
+.page-title {
+    text-align: center;
+}
 
 .control-box {
     display: flex;
     flex-direction: column;
+    padding-bottom: 15px;
     background-color: #50169c;
- 
     border: 1px solid #7D52B7;
     border-radius: 0px 0px 10px 10px;
 }
@@ -28,11 +36,15 @@ body {
 }
 
 .medium-box {
-    flex-grow: 1;
+    width: 250px;
 }
 
 .large-box {
-    flex-grow: 2;
+    width: 450px;
+}
+
+.very-large-box {
+    width: 700px;
 }
 
 
@@ -40,6 +52,7 @@ body {
 .line-of-items {
     display: flex;
     flex-direction: row;
+    justify-content: space-evenly;
     margin: auto;
     margin-bottom: 5px;
     text-align: center;
@@ -53,9 +66,7 @@ body {
     justify-content: center;
 }
 
-.slidecontainer {
-     width: 100%; 
-}
+
 
 .control-input {
     width: 65px;

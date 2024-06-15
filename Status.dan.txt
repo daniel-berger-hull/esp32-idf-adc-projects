@@ -1,28 +1,41 @@
 
 Future:
-Draw the signal on the Canva? (instead of the packet received)
+* Draw the signal on the Canvas? (instead of the packet received)
+
+* Break down the .js into sub .js files. This would need to ECMAScript modules.
+  Here is articles on this:
+
+    https://stackoverflow.com/questions/950087/how-do-i-include-a-javascript-file-in-another-javascript-file
 
 
 
 to Do:
-  *HTML detect if the number of expected frames (in the textbox count) happens
-     --> Toggle the Start/Stop button
-     --> Trigger a redraw of the Frame Canvas
-   
-   *HTML's start button should not be enable WHEN no connection is done with ESP32 (switch control not flipped)
-   
+
+      
    *Adjust the label on the x Axis to reflect the real time when frame a received 
     (0,1,2,3,4 is not usefull but 0ms, 100ms, etc would be better)
    
    *Adjust the y label, to reflect the size of the frame received
     (0,1,2,3,4 is not usefull but 100bytes, 500bytes, etc would be better)
 
-   *Correct the CSS of the control boxes, as they now stetch to cover all the screen
-
-   *Remove the Transfer rate section (slider, labels and value display, as not used in project)
-
    *Create a NodeJS project in the resources folder, as it could be a simulator to replace the ESP32
      (When you have no ESP32 board with you)
+
+   *Fix the number of bars: There is on extra bar drawn (i.e if 4 frames asked --> 5 bar will be draw)
+
+June 14
+=======
+
+  Replaced the time with method performance.now(),  for a better time mesurement
+  Corrected HTML's start/stop button when  no connection is done with ESP32 (switch control not flipped)
+  Removed the Transfer rate section (slider, labels and value display, as not used in project)
+  Corrected the CSS of the control boxes, as they were stetching to cover all the screen
+  HTML detects when the number of expected frames (in the textbox count) is reached
+     --> Toggle the Start/Stop button
+     --> Trigger a redraw of the Frame Canvas
+
+
+
 
 
 June 13

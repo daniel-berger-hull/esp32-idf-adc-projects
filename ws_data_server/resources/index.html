@@ -11,7 +11,7 @@
 <body>
 
     <div class="wrapper">
-        <h1>ESP32 Web Socket Test</h1>
+        <h1 class="page-title">ESP32 Web Socket Test</h1>
 
         <div class="line-of-items">
 
@@ -38,26 +38,16 @@
                 </div>
                 
                 <div class="line-of-items">
-                    <button id="start-update-button" class="in-the-middle">Start</button>
-                    <button id="stop-update-button" class="in-the-middle">Stop</button>
-                </div>
-
-                <div class="line-of-items"><span>Transfer Rate</span></div>
-                <div class="line-of-items">            
-                    <div class="slidecontainer">
-                        <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-                        <p>Value: <span id="transferspeed"></span></p>
-                    </div>
-                </div>
-    
+                    <button id="start-update-button" class="in-the-middle" disabled>Start</button>
+                    <button id="stop-update-button" class="in-the-middle" disabled>Stop</button>
+                </div>    
             </div>
 
-            <div class="control-box medium-box">
-                <div class="control-box-header">Frame Dispaly Control</div>
-                <div class="line-of-items"><span>Async Transfer</span></div>
+            <div class="control-box large-box">
+                <div class="control-box-header">Frame Reception Display</div>
 
                 <div class="canvas-section medium-canvas">
-                    <canvas id="graph-canvas" width="350" height="200" >Your browser does not support the canvas element.</canvas>
+                    <canvas id="graph-canvas" width="380" height="200" >Your browser does not support the canvas element.</canvas>
                 </div>
                 <div>
                     <button  id="test1-button">Testing!</button>
@@ -68,9 +58,8 @@
         </div>
 
         <div class="line-of-items">
-            <div class="control-box medium-box">
-                <div class="control-box-header">Frames Reception</div>
-                <div class="line-of-items"><span>Async Transfer</span></div>
+            <div class="control-box very-large-box">
+                <div class="control-box-header">Data Reception</div>
                 <div class="canvas-section large-canvas">
                     <canvas id="graph-canvas" width="550" height="200" >Your browser does not support the canvas element.</canvas>
                 </div>
@@ -80,10 +69,7 @@
               </div>
             </div>
         </div>
-       
-
-       
-
+    
     </div>
    
 
